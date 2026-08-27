@@ -20,7 +20,7 @@ conference, remote work, visiting family. *(Art. 6(1) Directive 2004/38/EC.)*
 1. **Before departure:** verify passport/ID validity; get EHIC from Segurança Social (Portugal).
 2. **Arrival:** nothing to register. No border checks (Schengen).
 3. **During stay:** use EHIC for any healthcare need.
-4. **If you stay past 3 months** → this becomes a *moving* case (M1–M6) — see `12-SUBCATEGORIES.md`.
+4. **If you stay past 3 months** → this becomes a *moving* case (M1–M6) — see `../SUBCATEGORIES.md`.
 
 ## 3. Deadlines
 
@@ -40,4 +40,4 @@ conference, remote work, visiting family. *(Art. 6(1) Directive 2004/38/EC.)*
 ## 5. Sources
 - EU Equal Treatment Office (DE) — Residence: https://www.eu-gleichbehandlungsstelle.de/eugs-en/eu-citizens/information-center/residence
 - EHIC: https://ehic.europa.eu/
-- See `../05-SOURCES.md`.
+- See `../../05-resources/SOURCES.md`.

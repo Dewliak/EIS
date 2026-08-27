@@ -43,13 +43,13 @@ off savings/investments. *(Art. 7(1)(b) Directive 2004/38/EC.)*
 
 | Document | Issuer | URL |
 |---|---|---|
-| Wohnungsgeberbestätigung | landlord | `../assets/pdf/wohnungsgeberbestaetigung_berlin.pdf` |
+| Wohnungsgeberbestätigung | landlord | `../../assets/pdf/wohnungsgeberbestaetigung_berlin.pdf` |
 | Comprehensive health insurance | PKV / GKV insurer | https://www.tk.de (or PKV provider) |
 | Anmeldung → Meldebescheinigung | Bürgeramt | service.berlin.de |
 | Proof of sufficient resources | pension/employer/bank | — |
-| Aufenthaltsanzeige §5 | Ausländerbehörde | `../assets/pdf/aufenthaltsanzeige_5_freizuegigkeitsgesetz.pdf` |
+| Aufenthaltsanzeige §5 | Ausländerbehörde | `../../assets/pdf/aufenthaltsanzeige_5_freizuegigkeitsgesetz.pdf` |
 
 ## 5. Sources
 - EU Equal Treatment Office (DE) — Residence: https://www.eu-gleichbehandlungsstelle.de/eugs-en/eu-citizens/information-center/residence
 - Remote Work Europe — EU citizens remote in DE: https://remoteworkeurope.eu/insights/eu-citizens-remote-work-germany-guide/
-- See `../05-SOURCES.md`.
+- See `../../05-resources/SOURCES.md`.

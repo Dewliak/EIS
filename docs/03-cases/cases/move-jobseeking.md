@@ -38,12 +38,12 @@
 
 | Document | Issuer | URL |
 |---|---|---|
-| Wohnungsgeberbestätigung | landlord | `../assets/pdf/wohnungsgeberbestaetigung_berlin.pdf` |
+| Wohnungsgeberbestätigung | landlord | `../../assets/pdf/wohnungsgeberbestaetigung_berlin.pdf` |
 | Anmeldung → Meldebescheinigung | Bürgeramt | service.berlin.de |
 | Health insurance (GKV/PKV) | insurer | https://www.tk.de |
 | Job-seeker registration | Agentur für Arbeit | https://www.arbeitsagentur.de |
 | Proof of job search | self (applications, interviews) | — |
-| Aufenthaltsanzeige §5 (if asked) | Ausländerbehörde | `../assets/pdf/aufenthaltsanzeige_5_freizuegigkeitsgesetz.pdf` |
+| Aufenthaltsanzeige §5 (if asked) | Ausländerbehörde | `../../assets/pdf/aufenthaltsanzeige_5_freizuegigkeitsgesetz.pdf` |
 
 ## 5. Sources
 - EU Equal Treatment Office (DE) — Residence: https://www.eu-gleichbehandlungsstelle.de/eugs-en/eu-citizens/information-center/residence

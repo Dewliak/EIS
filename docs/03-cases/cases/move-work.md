@@ -38,14 +38,14 @@ Directive 2004/38/EC; §2 Freizügigkeitsgesetz/EU.)*
 
 | Document | Issuer | URL |
 |---|---|---|
-| Wohnungsgeberbestätigung (landlord confirmation) | landlord (city form) | `../assets/pdf/wohnungsgeberbestaetigung_berlin.pdf` |
+| Wohnungsgeberbestätigung (landlord confirmation) | landlord (city form) | `../../assets/pdf/wohnungsgeberbestaetigung_berlin.pdf` |
 | Anmeldung → Meldebescheinigung | Bürgeramt | service.berlin.de (Berlin) |
 | Steuer-ID | BZSt (auto) | https://www.bzst.de |
 | Health insurance | TK / AOK / Barmer | https://www.tk.de · https://www.aok.de |
 | Social security number | Deutsche Rentenversicherung | https://www.deutsche-rentenversicherung.de |
-| Aufenthaltsanzeige §5 (if asked) | Ausländerbehörde (city) | `../assets/pdf/aufenthaltsanzeige_5_freizuegigkeitsgesetz.pdf` |
+| Aufenthaltsanzeige §5 (if asked) | Ausländerbehörde (city) | `../../assets/pdf/aufenthaltsanzeige_5_freizuegigkeitsgesetz.pdf` |
 
 ## 5. Sources
 - EU Equal Treatment Office (DE) — Residence: https://www.eu-gleichbehandlungsstelle.de/eugs-en/eu-citizens/information-center/residence
 - Make it in Germany — EU citizens: https://www.make-it-in-germany.com/en/working-in-germany/information-eu-citizens
-- See `../05-SOURCES.md`.
+- See `../../05-resources/SOURCES.md`.

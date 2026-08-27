@@ -50,7 +50,7 @@ This is our planned emergency layer.
 - Non-EU citizens: wallet availability differs (we target EU citizens first).
 
 ## Sources
-- EC Digital Building Blocks — European Digital Identity Regulation page (URL in 05-SOURCES.md)
+- EC Digital Building Blocks — European Digital Identity Regulation page (URL in ../05-resources/SOURCES.md)
 - Gataca timeline — https://www.gataca.io/resources/blog/eIDAS2-timeline/
 - Namirial status check — https://www.namirial.com/en/blog/stories/status-check-eudi-wallet/
 - Regulation (EU) 2024/1183 (eIDAS 2.0)

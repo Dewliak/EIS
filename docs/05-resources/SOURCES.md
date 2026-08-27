@@ -14,7 +14,7 @@ All sources verified during research. Split: primary (official) vs secondary (gu
 - **Federal Foreign Office (Auswärtiges Amt) — EU citizens working in Germany FAQ**
   https://www.auswaertiges-amt.de/en/visa-service/buergerservice/faq/04-eubuergerarbeitsmoeglichkeiten/606668
 - **Bundesmeldegesetz (BMG)** — §17 (registration), §19(3) (landlord confirmation)
-- **Wohnungsgeberbestätigung form (Berlin)** — fetched → `assets/pdf/wohnungsgeberbestaetigung_berlin.pdf`
+- **Wohnungsgeberbestätigung form (Berlin)** — fetched → `../assets/pdf/wohnungsgeberbestaetigung_berlin.pdf`
   https://www.berlinstadtservice.de/pdf/Wohnungsgeberbescheinigung.pdf
 
 ### Portugal (origin — for reference / reverse direction)
@@ -24,7 +24,7 @@ All sources verified during research. Split: primary (official) vs secondary (gu
   https://aima.gov.pt/pt/nacionais-ue-e-familiares/nacionais-ue/certificado-de-registo-para-nacionais-ue
 - **Lisboa municipality — EU Citizen Registration Certificate (EN)**
   https://informacoeseservicos.lisboa.pt/en/services/detail/european-union-citizen-registration-certificate
-- **Porto municipality — CRUE form (PDF)** — fetched → `assets/pdf/crue_form_porto.pdf`
+- **Porto municipality — CRUE form (PDF)** — fetched → `../assets/pdf/crue_form_porto.pdf`
   https://portaldomunicipe.cm-porto.pt/documents/20122/1130484/fol_sef_PT.pdf/b3dfd875-90f6-9857-b62c-69b250b09aaa?t=1701336803152
 
 ### EU

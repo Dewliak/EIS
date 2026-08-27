@@ -1,6 +1,6 @@
 # 00 — Platform Concept
 
-> Note: this is the early concept doc. **`09-FULL-PLATFORM-SPEC.md`** is the consolidated master
+> Note: this is the early concept doc. **`PLATFORM-SPEC.md`** is the consolidated master
 > specification (web + mobile + EUDI + emergency, full data model, research plan). Start there.
 
 ## Vision
@@ -39,11 +39,11 @@ The European Digital Identity Wallet is the unlock for two features we've planne
    age) are verified at source.
 
 Timeline: wallets mandatory from **24 Dec 2026**; regulated entities accept from ~late 2027.
-See `08-EUDI-WALLET.md`.
+See `EUDI-WALLET.md`.
 
 ## MVP scope (for now)
 User asked to start with **documents + questions** — i.e. the *Documents* and *Information*
-tabs, built from the index in `04-DOCUMENTS-INDEX.md`. The worked example is
+tabs, built from the index in `../04-research/DOCUMENTS-INDEX.md`. The worked example is
 **Portugal → Germany** (Portuguese citizens).
 
 ## Data model sketch (for later)

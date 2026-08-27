@@ -44,12 +44,12 @@ running a business. *(Art. 7(1)(a) Directive 2004/38/EC — "self-employed".)*
 
 | Document | Issuer | URL |
 |---|---|---|
-| Wohnungsgeberbestätigung | landlord | `../assets/pdf/wohnungsgeberbestaetigung_berlin.pdf` |
+| Wohnungsgeberbestätigung | landlord | `../../assets/pdf/wohnungsgeberbestaetigung_berlin.pdf` |
 | Anmeldung → Meldebescheinigung | Bürgeramt | service.berlin.de |
 | Fragebogen zur steuerlichen Erfassung | Finanzamt (ELSTER) | https://www.elster.de |
 | Gewerbeanmeldung | Gewerbeamt (city) | local city portal |
 | Health insurance (GKV/PKV) | insurer | https://www.tk.de · https://www.aok.de |
-| Aufenthaltsanzeige §5 (if asked) | Ausländerbehörde | `../assets/pdf/aufenthaltsanzeige_5_freizuegigkeitsgesetz.pdf` |
+| Aufenthaltsanzeige §5 (if asked) | Ausländerbehörde | `../../assets/pdf/aufenthaltsanzeige_5_freizuegigkeitsgesetz.pdf` |
 
 ## 5. Sources
 - EU Equal Treatment Office (DE) — Residence: https://www.eu-gleichbehandlungsstelle.de/eugs-en/eu-citizens/information-center/residence

@@ -5,7 +5,8 @@ Streamlit front-end for the unified mobility platform.
 This is the **Portugal-hosted instance**: origin is fixed to Portugal, the user
 picks a destination, an intent (traveling / moving), and a subject, then lands
 in the Deadlines · Documents · Information dashboard described in
-docs/00-PLATFORM-CONCEPT.md and docs/09-FULL-PLATFORM-SPEC.md.
+docs/02-spec/PLATFORM-CONCEPT.md and docs/02-spec/PLATFORM-SPEC.md
+(build target: docs/01-plan/IMPLEMENTATION-PLAN.md).
 
 Real, sourced content exists for Germany (the focus) and Spain. The other seven
 destinations show rough/unverified matrix data, badged as such.
@@ -148,7 +149,7 @@ def inform_with_id():
             st.markdown("**🪪 Inform with ID** — notify your destination (and Portugal) that you are "
                         "traveling, using the EU Digital Identity Wallet.")
             st.caption("Wallet-gated feature. EUDI Wallets become mandatory 24 Dec 2026; production "
-                       "wallets land ~2027 (docs/09 §6.2). Disabled until the wallet layer is wired in.")
+                       "wallets land ~2027 (docs/02-spec/EUDI-WALLET.md). Disabled until the wallet layer is wired in.")
         with cols[1]:
             st.button("Inform with ID", disabled=True, use_container_width=True,
                       help="Coming with the EUDI Wallet integration (~2027).")
@@ -236,8 +237,8 @@ def main():
         dashboard()
 
     st.divider()
-    st.caption("EIS prototype · content per docs/ · EUDI Wallet verifier lives separately in the "
-               "repo root `app.py` (Flask). Not legal advice.")
+    st.caption("EIS prototype · content per docs/ · EUDI Wallet verifier lives separately: "
+               "FastAPI service `eudi_login/service.py` + Streamlit gate `login_app.py`. Not legal advice.")
 
 
 if __name__ == "__main__":

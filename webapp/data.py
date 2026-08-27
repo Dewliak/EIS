@@ -1,12 +1,12 @@
 """
 EIS content dataset — Portugal-hosted instance (origin = Portugal).
 
-Structure mirrors the data model in docs/09-FULL-PLATFORM-SPEC.md §8:
+Structure mirrors the data model in docs/02-spec/PLATFORM-SPEC.md §8:
 
     country -> intent (traveling|moving) -> subject -> {deadlines, documents, info}
 
-Only Germany and Spain carry VERIFIED content (docs 02, 03, 04, 10). The other
-seven destinations use the doc/11 registration matrix, which is partly
+Only Germany and Spain carry VERIFIED content (docs/04-research: TRAVELING-CASE, MOVING-CASE, DOCUMENTS-INDEX, SPAIN-VALIDATION). The other
+seven destinations use the docs/04-research/COUNTRY-MATRIX.md, which is partly
 UNVERIFIED — those are flagged `verified=False` so the UI can badge them as
 mock/unverified. The short-stay (traveling) baseline is universal for EU
 citizens (freedom of movement), so it is real for every destination.
@@ -19,7 +19,7 @@ ORIGIN = {"code": "PT", "name": "Portugal", "flag": "🇵🇹"}
 
 # ---------------------------------------------------------------------------
 # Country registry — real focus = Germany. Spain is the second verified case.
-# The rest come from the 8-country matrix (docs/11) and are marked unverified.
+# The rest come from the country matrix (docs/04-research/COUNTRY-MATRIX.md) and are marked unverified.
 # ---------------------------------------------------------------------------
 
 COUNTRIES = [
@@ -35,7 +35,7 @@ COUNTRIES = [
     {"code": "CY", "name": "Cyprus", "flag": "🇨🇾", "verified": False},
 ]
 
-# Subjects. Only "residence" is live for the MVP (per docs/00 MVP scope).
+# Subjects. Only "residence" is live for the MVP (per docs/01-plan/IMPLEMENTATION-PLAN.md build order).
 SUBJECTS = [
     {"id": "residence", "name": "Residence & Registration", "icon": "🏠", "live": True},
     {"id": "work", "name": "Work", "icon": "💼", "live": False},
@@ -54,7 +54,7 @@ INTENTS = [
 
 
 # ---------------------------------------------------------------------------
-# Universal short-stay baseline (freedom of movement — verified, docs/02).
+# Universal short-stay baseline (freedom of movement — verified, docs/04-research/TRAVELING-CASE.md).
 # Same for every destination for EU citizens.
 # ---------------------------------------------------------------------------
 
@@ -110,7 +110,7 @@ def _traveling_residence(dest_name):
             ("Short-stay right", "≤ 3 months, valid ID only, no conditions", "Freedom of Movement Act/EU"),
             ("Visa / residence permit", "Not needed for EU citizens", "Freedom of Movement Act/EU (2005)"),
             ("Healthcare", "EHIC covers necessary care during the stay", "ehic.europa.eu"),
-            ("If the trip becomes a move", "Destination's registration clock activates — see the Moving intent", "docs/02, docs/03"),
+            ("If the trip becomes a move", "Destination's registration clock activates — see the Moving intent", "docs/04-research/MOVING-CASE.md"),
         ],
         "sources": [
             "EU freedom of movement — https://europa.eu/youreurope/citizens/residence/",
@@ -120,7 +120,7 @@ def _traveling_residence(dest_name):
 
 
 # ---------------------------------------------------------------------------
-# Germany — VERIFIED moving case (docs/03, docs/04). The real focus.
+# Germany — VERIFIED moving case (docs/04-research/MOVING-CASE.md, DOCUMENTS-INDEX.md). The real focus.
 # ---------------------------------------------------------------------------
 
 _DE_MOVING = {
@@ -224,7 +224,7 @@ _DE_MOVING = {
 
 
 # ---------------------------------------------------------------------------
-# Spain — VERIFIED moving case (docs/10).
+# Spain — VERIFIED moving case (docs/04-research/SPAIN-VALIDATION.md).
 # ---------------------------------------------------------------------------
 
 _ES_MOVING = {
@@ -290,12 +290,12 @@ _ES_MOVING = {
     ],
     "info": [
         ("Registration timing", "Within 3 months of entry", "Administración General del Estado"),
-        ("Fine", "None specified for EU citizens (registration is a right)", "docs/10"),
+        ("Fine", "None specified for EU citizens (registration is a right)", "docs/04-research/SPAIN-VALIDATION.md"),
         ("Fee", "Tasa modelo 790 código 012", "Policía Nacional"),
-        ("Landlord form", "None — address via registration + padrón", "docs/10"),
+        ("Landlord form", "None — address via registration + padrón", "docs/04-research/SPAIN-VALIDATION.md"),
         ("Tax ID", "NIE assigned with registration; doubles as NIF", "AEAT"),
-        ("Residence permit", "Not needed — the CUE is the registration", "docs/10"),
-        ("Second layer", "Padrón at the Ayuntamiento is a distinct step", "docs/10"),
+        ("Residence permit", "Not needed — the CUE is the registration", "docs/04-research/SPAIN-VALIDATION.md"),
+        ("Second layer", "Padrón at the Ayuntamiento is a distinct step", "docs/04-research/SPAIN-VALIDATION.md"),
     ],
     "sources": [
         "Administración General del Estado — https://administracion.gob.es/pag_Home/en/Tu-espacio-europeo/derechos-obligaciones/ciudadanos/residencia/obtencion-residencia/inscribirte-residente.html",
@@ -306,7 +306,7 @@ _ES_MOVING = {
 
 
 # ---------------------------------------------------------------------------
-# The 8-country matrix (docs/11). UNVERIFIED where the doc says so.
+# The country matrix (docs/04-research/COUNTRY-MATRIX.md). UNVERIFIED where the doc says so.
 # Built from the master fact table so the UI can show real structure with a
 # mock/unverified badge.
 # ---------------------------------------------------------------------------
@@ -396,12 +396,12 @@ _MATRIX = {
 
 
 def _matrix_moving(code):
-    """Build a moving-case dashboard from the docs/11 matrix row (unverified)."""
+    """Build a moving-case dashboard from the docs/04-research/COUNTRY-MATRIX.md row (unverified)."""
     m = _MATRIX[code]
     return {
         "verified": False,
         "summary": (
-            f"**Rough / unverified data** from the 8-country registration matrix (docs/11). "
+            f"**Rough / unverified data** from the 8-country registration matrix (docs/04-research/COUNTRY-MATRIX.md). "
             f"EU citizens need **no residence permit** (freedom of movement) — a registration "
             f"certificate only. Registration authority: **{m['authority']}**. "
             f"Timing: {m['timing']}."
@@ -443,7 +443,7 @@ def _matrix_moving(code):
             ("Health / social", m["health"], m["source"]),
             ("Residence permit", m["permit"], m["source"]),
         ],
-        "sources": [f"Primary — {m['source']}", "Cross-check: docs/11-REGISTRATION-MATRIX-8-COUNTRIES.md"],
+        "sources": [f"Primary — {m['source']}", "Cross-check: docs/04-research/COUNTRY-MATRIX.md"],
     }
 
 

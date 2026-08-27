@@ -330,7 +330,7 @@ destination country, not just the home country.
 
 ## 8. Consolidated data model
 
-Extends the sketch in `00-PLATFORM-CONCEPT.md` with the identity + emergency + notification
+Extends the sketch in `PLATFORM-CONCEPT.md` with the identity + emergency + notification
 entities.
 
 ```
@@ -461,5 +461,5 @@ facts, no invented forms/URLs/statistics.
 - Singapore MFA eRegister: https://eregister.mfa.gov.sg/ (precedent for voluntary travel registration)
 
 **Mobility content (existing research)**
-- See `05-SOURCES.md` (Portugal → Germany worked case), `07-ASSISTING-PLATFORMS.md`,
-  `08-EUDI-WALLET.md`.
+- See `../05-resources/SOURCES.md` (Portugal → Germany worked case), `../05-resources/ASSISTING-PLATFORMS.md`,
+  `EUDI-WALLET.md`.

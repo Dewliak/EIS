@@ -31,7 +31,7 @@ Persona: **Tiago** — Portugal (Lisbon) → Germany (Berlin), 3 weeks.
 ### Step 4 — Boundary condition (if stay extends / turns into a move)
 - [ ] If he actually **moves** his residence to Germany, the **14-day Anmeldung** rule activates
       immediately upon moving in (not after 3 months — Germany differs from Portugal here).
-      See `03-MOVING-CASE.md`.
+      See `MOVING-CASE.md`.
 
 ## Documents needed (traveling)
 | Document | Required? | Where | Notes |
@@ -56,4 +56,4 @@ Persona: **Tiago** — Portugal (Lisbon) → Germany (Berlin), 3 weeks.
 ## Sources
 - EU Equal Treatment Office (Germany) — Residence — https://www.eu-gleichbehandlungsstelle.de/eugs-en/eu-citizens/information-center/residence
 - ehic.europa.eu — https://ehic.europa.eu/
-- See `05-SOURCES.md` for full list.
+- See `../05-resources/SOURCES.md` for full list.

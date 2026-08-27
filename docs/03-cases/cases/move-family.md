@@ -41,10 +41,10 @@ dependent relative. *(Art. 7(1)(d) + Art. 2(2) Directive 2004/38/EC.)*
 | Document | Issuer | URL |
 |---|---|---|
 | Marriage / birth certificate (+ translation) | Portuguese civil registry (Conservatória) | https://www.civilonline.mj.pt |
-| Wohnungsgeberbestätigung | landlord | `../assets/pdf/wohnungsgeberbestaetigung_berlin.pdf` |
+| Wohnungsgeberbestätigung | landlord | `../../assets/pdf/wohnungsgeberbestaetigung_berlin.pdf` |
 | Anmeldung → Meldebescheinigung | Bürgeramt | service.berlin.de |
 | Health insurance (co-insured) | main citizen's insurer | https://www.tk.de |
-| Aufenthaltsanzeige §5 | Ausländerbehörde | `../assets/pdf/aufenthaltsanzeige_5_freizuegigkeitsgesetz.pdf` |
+| Aufenthaltsanzeige §5 | Ausländerbehörde | `../../assets/pdf/aufenthaltsanzeige_5_freizuegigkeitsgesetz.pdf` |
 
 ## 5. Sources
 - EU Equal Treatment Office (DE) — Residence (family members): https://www.eu-gleichbehandlungsstelle.de/eugs-en/eu-citizens/information-center/residence

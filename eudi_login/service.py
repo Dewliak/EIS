@@ -9,6 +9,7 @@ from urllib.parse import urlencode
 
 import jwt
 import qrcode
+import qrcode.image.svg
 from fastapi import FastAPI, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -82,11 +83,13 @@ def initiate_login():
     deep_link = "openid4vp://?" + urlencode(auth_request_params)
     sandbox_link = deep_link.replace("openid4vp://", "https://eudi-test.dev/authorize")
 
-    # Generate QR code as base64 string for easy Streamlit rendering
-    img = qrcode.make(deep_link)
-    buf = BytesIO()
-    img.save(buf, format="PNG")
-    qr_base64 = base64.b64encode(buf.getvalue()).decode("utf-8")
+    # Generate QR code as SVG so we do not depend on Pillow wheels.
+    qr = qrcode.QRCode(border=4, box_size=10)
+    qr.add_data(deep_link)
+    qr.make(fit=True)
+    img = qr.make_image(image_factory=qrcode.image.svg.SvgPathImage)
+    qr_svg = img.to_string().decode("utf-8")
+    qr_base64 = base64.b64encode(qr_svg.encode("utf-8")).decode("utf-8")
 
     SESSIONS[state] = {"status": "pending", "nonce": nonce, "deep_link": deep_link}
 

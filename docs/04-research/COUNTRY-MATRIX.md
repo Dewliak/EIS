@@ -146,7 +146,7 @@ The per-country deadline collapses into **four distinct patterns**:
 
 **Poland** — MSWiA: https://www.gov.pl/web/mswia-en/registration-of-residence · MOS: https://mos.cudzoziemcy.gov.pl/en/
 
-**Portugal** — ePortugal / AIMA / Portal das Finanças (see `05-SOURCES.md` and `04-DOCUMENTS-INDEX.md`).
+**Portugal** — ePortugal / AIMA / Portal das Finanças (see `../05-resources/SOURCES.md` and `DOCUMENTS-INDEX.md`).
 
 **Romania** — IGI: https://igi.mai.gov.ro/en/residence-registration/
 

@@ -39,7 +39,10 @@ class EUDIWalletLogin:
 
         # 2. Display QR Code in Streamlit
         st.markdown("### 🛂 Sign in with your EU Digital Identity Wallet")
-        st.image(f"data:image/png;base64,{qr_base64}", width=250)
+        st.markdown(
+            f'<img src="data:image/svg+xml;base64,{qr_base64}" width="250" />',
+            unsafe_allow_html=True,
+        )
         st.markdown(f"[Open in EUDI Dev Wallet sandbox]({sandbox_link}) (for same-device testing)")
 
         status_placeholder = st.empty()
