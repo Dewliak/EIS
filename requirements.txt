@@ -1,3 +1,4 @@
 flask>=3.0
 pyjwt>=2.8
 qrcode[pil]>=7.4
+streamlit>=1.36

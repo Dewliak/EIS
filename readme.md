@@ -3,7 +3,7 @@
 Unified European mobility platform + EU Digital Identity Wallet identity/emergency layer.
 
 > **Origin → Destination worked example:** Portuguese citizens → Germany (Berlin).
-> Third-country validation: Spain (see `docs/10-SPAIN-VALIDATION.md`).
+> Third-country validation: Spain (see `documentation/10-SPAIN-VALIDATION.md`).
 
 ## The project
 
@@ -12,7 +12,7 @@ Two parts, one repo:
 | Part | Where | What |
 |---|---|---|
 | **Code** | `app.py`, `requirements.txt` | EUDI Wallet OpenID4VP verifier prototype (Flask) |
-| **Research & spec** | `docs/00`–`docs/10` | Personas, case walkthroughs, documents index, full platform spec, sources, PDF forms |
+| **Research & spec** | `documentation/00`–`documentation/11` | Personas, case walkthroughs, documents index, full platform spec, sources, PDF forms |
 
 ## Code — `app.py` (prototype)
 
@@ -49,7 +49,7 @@ Test against the public sandbox **eudi-test.dev** (needs https to reach your `/c
 - `PID_VCT` — `eu.europa.ec.eudi.pid.1` (ARF PID credential type).
 - `PUBLIC_BASE_URL` — where the wallet POSTs back.
 
-## Research & spec — `docs/`
+## Research & spec — `documentation/`
 
 | # | Doc | Content |
 |---|---|---|
@@ -64,12 +64,15 @@ Test against the public sandbox **eudi-test.dev** (needs https to reach your `/c
 | 08 | EUDI Wallet | eIDAS 2.0 timeline + use cases |
 | 09 | **Full platform spec** | **Master spec: web + mobile + EUDI + emergency, data model, research plan** |
 | 10 | Spain validation | 3rd country confirms the three-clock pattern |
-| — | `assets/pdf/` | Fetched forms (DE landlord confirmation, PT CRUE) |
+| 11 | Country matrix | 27-country fact matrix |
+| 12 | **Subcategories** | **The 7 cases (T1 + M1–M6) that need different procedures** |
+| — | `cases/` | **Per-case docs: info, procedures, deadlines, documents, URLs** |
+| — | `assets/pdf/` | Fetched forms (DE landlord confirmation, DE §5 notice, PT CRUE) |
 
-**Start at `docs/09-FULL-PLATFORM-SPEC.md`** — it consolidates everything and is the master
-specification.
+**Start at `documentation/09-FULL-PLATFORM-SPEC.md`** (master spec) and
+**`documentation/12-SUBCATEGORIES.md`** (the case taxonomy).
 
 ## Status
 
 Research + specification phase. `app.py` is the only code, and it's a prototype verifier.
-Next per `docs/09` §10: build the 27-country fact matrix, track wallet rollout, spec the MVP.
+Next per `documentation/09` §10: build the 27-country fact matrix, track wallet rollout, spec the MVP.
