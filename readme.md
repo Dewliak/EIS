@@ -41,6 +41,20 @@ cloudflared tunnel --url http://localhost:5000   # or: ngrok http 5000
 PUBLIC_BASE_URL=https://your-tunnel.example.com python app.py
 ```
 
+### Docker modes
+
+The Docker deployment runs FastAPI, Streamlit, and Nginx together behind one
+public port. Railway supplies HTTPS in deployment; local development can use
+Docker Compose plus `cloudflared`:
+
+```bash
+docker compose up --build
+cloudflared tunnel --url http://localhost:8080
+```
+
+See `webapp/README.md` for the full local and Railway configuration, including
+`PUBLIC_BASE_URL` and `EUDI_API_URL`.
+
 Test against the public sandbox **eudi-test.dev** (needs https to reach your `/callback`).
 
 ### Config

@@ -53,6 +53,12 @@ class StatusResponse(BaseModel):
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
+@app.get("/health")
+def health():
+    """Lightweight health check for Docker and Railway."""
+    return {"status": "ok"}
+
+
 @app.post("/login", response_model=LoginResponse)
 def initiate_login():
     state = secrets.token_urlsafe(16)
