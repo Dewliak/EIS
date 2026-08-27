@@ -19,23 +19,43 @@ Two parts, one repo:
    doc map). Hand this to whoever builds the site.
 2. **`docs/README.md`** — index of every document.
 
-## Code
+## Code — architecture
 
-- **`login_app.py` + `eudi_login/`** — EUDI Wallet OpenID4VP verifier (Flask prototype). Routes:
-  `/login`, `/qr`, `/callback`, `/status/<id>`, `/result/<id>`, gated by nationality
-  (`ALLOWED_NATIONALITIES`). **⚠️ PROTOTYPE** — signature/trust-chain verification, key-binding,
-  revocation, replay protection, signed request objects are all mocked.
-- **`webapp/`** — Streamlit web prototype (sibling-built).
+| Piece | Tech | Role | Port |
+|---|---|---|---|
+| `eudi_login/service.py` | **FastAPI** | EUDI Wallet OpenID4VP verifier — issues the QR, polls status, checks nationality (`ALLOWED_NATIONALITIES`). QR is SVG (no Pillow dep). | 5000 |
+| `eudi_login/client.py` | Streamlit | Login widget: shows the QR, polls the service, returns the verified user. | — |
+| `webapp/app.py` | Streamlit | The EIS mobility dashboard — **gated by the wallet client above** (no content renders until verified). | 8501 |
+| `login_app.py` | Streamlit | Standalone login demo (optional; the dashboard already gates itself). | — |
 
-### Run the verifier
+> **⚠️ PROTOTYPE verifier** — signature/trust-chain verification, key-binding, revocation, replay
+> protection, and signed request objects are all mocked. Test against the sandbox **eudi-test.dev**
+> (a real wallet needs an HTTPS `PUBLIC_BASE_URL`, e.g. a tunnel, to reach the callback).
+
+## Launch
+
+Two processes: the verifier service, then the wallet-gated site.
 
 ```bash
-pip install -r requirements.txt
-cloudflared tunnel --url http://localhost:5000   # or: ngrok http 5000
-PUBLIC_BASE_URL=https://your-tunnel.example.com python login_app.py
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+
+# Terminal 1 — verifier service (:5000).
+# PUBLIC_BASE_URL must be a public HTTPS URL for a real wallet; localhost is
+# fine to see the flow with the eudi-test.dev sandbox.
+PUBLIC_BASE_URL=https://your-tunnel.example.com \
+  .venv/bin/uvicorn eudi_login.service:app --host 0.0.0.0 --port 5000 --reload
+
+# Terminal 2 — the gated EIS dashboard (:8501).
+EUDI_API_URL=http://localhost:5000 \
+ALLOWED_NATIONALITIES=PT,DE,FR,NL,IT,ES,SK \
+  .venv/bin/streamlit run webapp/app.py --server.port 8501
 ```
 
-Test against the sandbox **eudi-test.dev** (needs https to reach `/callback`).
+Then open **http://localhost:8501** — you'll get the QR sign-in first, then the dashboard.
+FastAPI auto-docs live at **http://localhost:5000/docs**.
+
+The standalone login demo (optional): `EUDI_API_URL=http://localhost:5000 .venv/bin/streamlit run login_app.py --server.port 8502`.
 
 ## Documentation — `docs/`
 

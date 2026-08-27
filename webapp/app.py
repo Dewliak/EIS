@@ -14,9 +14,20 @@ destinations show rough/unverified matrix data, badged as such.
 Run:  streamlit run webapp/app.py
 """
 
+import os
+import sys
+from pathlib import Path
+
 import streamlit as st
 
+# ``streamlit run webapp/app.py`` puts webapp/ on sys.path.  Add the project
+# root so the sibling EUDI login package is available in that normal run mode.
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 import data
+from eudi_login.client import EUDIWalletLogin
 
 st.set_page_config(page_title="EIS — European Impact Sprints", page_icon="🇪🇺", layout="wide")
 
@@ -29,6 +40,19 @@ def _init_state():
     st.session_state.setdefault("country", None)
     st.session_state.setdefault("intent", None)
     st.session_state.setdefault("subject", None)
+
+
+def _wallet_login() -> EUDIWalletLogin:
+    """Create the EUDI client from deployment configuration."""
+    allowed_nationalities = {
+        nationality.strip().upper()
+        for nationality in os.environ.get("ALLOWED_NATIONALITIES", "PT,DE,FR,NL,IT,ES,SK").split(",")
+        if nationality.strip()
+    }
+    return EUDIWalletLogin(
+        api_base_url=os.environ.get("EUDI_API_URL", "http://localhost:5000"),
+        allowed_nationalities=allowed_nationalities,
+    )
 
 
 def _reset(to_step):
@@ -45,7 +69,7 @@ _init_state()
 # Header
 # ---------------------------------------------------------------------------
 
-def header():
+def header(user):
     left, right = st.columns([0.75, 0.25])
     with left:
         st.markdown("## 🇪🇺 EIS — European Impact Sprints")
@@ -56,6 +80,11 @@ def header():
         )
     with right:
         st.markdown(" ")
+        st.caption(f"Wallet verified · {', '.join(user.nationalities)}")
+        if st.button("Sign out", use_container_width=True):
+            _wallet_login().sign_out()
+            _reset("country")
+            st.rerun()
         if st.button("↺ Start over", use_container_width=True):
             _reset("country")
             st.rerun()
@@ -224,7 +253,11 @@ def dashboard():
 # ---------------------------------------------------------------------------
 
 def main():
-    header()
+    user = _wallet_login().authenticate()
+    if user is None or not user.verified:
+        st.stop()
+
+    header(user)
     breadcrumb()
 
     if st.session_state.country is None:
@@ -237,8 +270,8 @@ def main():
         dashboard()
 
     st.divider()
-    st.caption("EIS prototype · content per docs/ · EUDI Wallet verifier lives separately: "
-               "FastAPI service `eudi_login/service.py` + Streamlit gate `login_app.py`. Not legal advice.")
+    st.caption("EIS prototype · access is protected by the EUDI Wallet verifier service · "
+               "content per docs/ · not legal advice.")
 
 
 if __name__ == "__main__":
