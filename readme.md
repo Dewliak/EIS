@@ -34,28 +34,38 @@ Two parts, one repo:
 
 ## Launch
 
-Two processes: the verifier service, then the wallet-gated site.
-
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
+```
 
-# Terminal 1 — verifier service (:5000).
-# PUBLIC_BASE_URL must be a public HTTPS URL for a real wallet; localhost is
-# fine to see the flow with the eudi-test.dev sandbox.
-PUBLIC_BASE_URL=https://your-tunnel.example.com \
+### Local dev
+
+The wallet QR gate is always on. The wallet POSTs its response to the verifier's `/callback`,
+so the verifier must be reachable over **public HTTPS** — locally that means a tunnel (a stand-in
+for the public URL you get for free on Railway).
+
+```bash
+# Terminal 1 — tunnel (gives you a public HTTPS URL for :5000)
+cloudflared tunnel --url http://localhost:5000        # or: ngrok http 5000
+
+# Terminal 2 — verifier service. PUBLIC_BASE_URL = the tunnel URL from Terminal 1.
+PUBLIC_BASE_URL=https://your-tunnel.trycloudflare.com \
   .venv/bin/uvicorn eudi_login.service:app --host 0.0.0.0 --port 5000 --reload
 
-# Terminal 2 — the gated EIS dashboard (:8501).
+# Terminal 3 — the gated EIS dashboard.
 EUDI_API_URL=http://localhost:5000 \
 ALLOWED_NATIONALITIES=PT,DE,FR,NL,IT,ES,SK \
   .venv/bin/streamlit run webapp/app.py --server.port 8501
 ```
 
-Then open **http://localhost:8501** — you'll get the QR sign-in first, then the dashboard.
-FastAPI auto-docs live at **http://localhost:5000/docs**.
+FastAPI auto-docs: **http://localhost:5000/docs**. Standalone login demo (optional):
+`EUDI_API_URL=http://localhost:5000 .venv/bin/streamlit run login_app.py --server.port 8502`.
 
-The standalone login demo (optional): `EUDI_API_URL=http://localhost:5000 .venv/bin/streamlit run login_app.py --server.port 8502`.
+### Deploy (Railway) — no tunnel
+
+Railway hands each service a public HTTPS domain, which **replaces the tunnel**. See
+[`DEPLOY.md`](DEPLOY.md).
 
 ## Documentation — `docs/`
 
