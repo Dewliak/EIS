@@ -1,5 +1,4 @@
 # eudi_login/client.py
-import time
 from dataclasses import dataclass
 from typing import Optional
 
@@ -21,10 +20,72 @@ class EUDIWalletLogin:
 
     def authenticate(self) -> Optional[EUDIUser]:
         """
-        Initiates the login flow, displays the QR code, polls for completion,
-        and returns a typed EUDIUser object or None if failed/cancelled.
+        Render the wallet-login gate and return a verified user once the wallet
+        has approved the request.
+
+        The login transaction is retained in ``st.session_state``.  Polling is
+        performed by a Streamlit fragment, avoiding a two-minute blocking loop
+        that would otherwise make the rest of the UI unresponsive.
         """
-        # 1. Initiate login
+        user = st.session_state.get("eudi_user")
+        if isinstance(user, EUDIUser) and user.verified:
+            return user
+
+        transaction = st.session_state.get("eudi_login_transaction")
+        if transaction is None:
+            transaction = self._initiate_login()
+            if transaction is None:
+                return None
+            st.session_state.eudi_login_transaction = transaction
+
+        st.markdown("### 🛂 Sign in with your EU Digital Identity Wallet")
+        st.write("Scan the QR code with your wallet and approve the identity request to continue.")
+        st.image(f"data:image/png;base64,{transaction['qr_code_base64']}", width=250)
+        st.markdown(
+            f"[Open in EUDI Dev Wallet sandbox]({transaction['sandbox_link']}) "
+            "(for same-device testing)"
+        )
+
+        @st.fragment(run_every="2s")
+        def poll_login_status():
+            status, payload = self._get_status(transaction["state"])
+            if status == "pending":
+                st.info("⏳ Waiting for wallet scan and approval…")
+                return
+            if status == "connection_error":
+                st.warning("Connection to the EUDI Login Service was lost. Retrying…")
+                return
+
+            if status == "verified":
+                nationalities = payload.get("nationalities", [])
+                if not any(n in self.allowed_nationalities for n in nationalities):
+                    st.error("⛔ Access denied: your nationality is not permitted for this instance.")
+                    return
+                st.session_state.eudi_user = EUDIUser(
+                    subject=f"user-{transaction['state']}",
+                    nationalities=nationalities,
+                    verified=True,
+                )
+                st.session_state.pop("eudi_login_transaction", None)
+                st.rerun()
+
+            st.session_state.pop("eudi_login_transaction", None)
+            if status == "rejected":
+                st.error("⛔ Access denied by the identity provider.")
+            else:
+                st.error(f"⚠️ Verification failed: {payload.get('error', 'unknown error')}")
+            if st.button("Try again", key="eudi_login_retry"):
+                st.rerun()
+
+        poll_login_status()
+        return None
+
+    def sign_out(self) -> None:
+        """Remove the current wallet session from the Streamlit browser session."""
+        st.session_state.pop("eudi_user", None)
+        st.session_state.pop("eudi_login_transaction", None)
+
+    def _initiate_login(self) -> Optional[dict]:
         try:
             response = requests.post(f"{self.api_base_url}/login", timeout=10)
             response.raise_for_status()
@@ -33,61 +94,17 @@ class EUDIWalletLogin:
             st.error(f"Failed to connect to EUDI Login Service: {e}")
             return None
 
-        state = data["state"]
-        qr_base64 = data["qr_code_base64"]
-        sandbox_link = data["sandbox_link"]
+        required_fields = {"state", "qr_code_base64", "sandbox_link"}
+        if not required_fields.issubset(data):
+            st.error("EUDI Login Service returned an incomplete login request.")
+            return None
+        return data
 
-        # 2. Display QR Code in Streamlit
-        st.markdown("### 🛂 Sign in with your EU Digital Identity Wallet")
-        st.image(f"data:image/png;base64,{qr_base64}", width=250)
-        st.markdown(f"[Open in EUDI Dev Wallet sandbox]({sandbox_link}) (for same-device testing)")
-
-        status_placeholder = st.empty()
-
-        # 3. Poll for status
-        max_attempts = 60  # 2 minutes max
-        for _ in range(max_attempts):
-            time.sleep(2)
-            try:
-                status_resp = requests.get(f"{self.api_base_url}/status/{state}", timeout=5)
-                status_resp.raise_for_status()
-                status_data = status_resp.json()
-            except requests.RequestException:
-                status_placeholder.warning("Connection to login service lost. Retrying...")
-                continue
-
-            status = status_data.get("status")
-
-            if status == "pending":
-                status_placeholder.info("⏳ Waiting for wallet scan and approval...")
-                continue
-
-            if status == "verified":
-                nationalities = status_data.get("nationalities", [])
-                # Clear the QR code UI
-                status_placeholder.empty()
-
-                # Authorization policy check
-                if not any(n in self.allowed_nationalities for n in nationalities):
-                    st.error(f"⛔ Access denied. Nationalities {nationalities} are not on the allow-list.")
-                    return None
-
-                st.success(f"✅ Identity verified! Welcome.")
-                return EUDIUser(
-                    subject=f"user-{state}",  # In production, extract sub from VP token
-                    nationalities=nationalities,
-                    verified=True
-                )
-
-            if status == "rejected":
-                status_placeholder.empty()
-                st.error("⛔ Access denied by the identity provider.")
-                return None
-
-            if status == "error":
-                status_placeholder.empty()
-                st.error(f"⚠️ Verification failed: {status_data.get('error')}")
-                return None
-
-        status_placeholder.error("⏱️ Login timed out. Please try again.")
-        return None
+    def _get_status(self, state: str) -> tuple[str, dict]:
+        try:
+            response = requests.get(f"{self.api_base_url}/status/{state}", timeout=5)
+            response.raise_for_status()
+            data = response.json()
+        except requests.RequestException:
+            return "connection_error", {}
+        return data.get("status", "error"), data

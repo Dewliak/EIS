@@ -19,7 +19,10 @@ it's the universal EU freedom-of-movement baseline.
 Only the **Residence & Registration** subject is live; other subjects are stubbed
 "coming soon". The **Inform with ID** button and per-document **Sign** button are
 wallet-gated stubs (disabled) — the EUDI Wallet layer lands ~2027 (`docs/09` §6.2).
-The wallet verifier prototype is a separate Flask app in the repo root (`../app.py`).
+
+Access to the site itself is protected by the EUDI Wallet verifier in
+`../eudi_login/`. The Streamlit client shows its QR request before any EIS content
+is rendered and permits only the configured nationalities.
 
 ## Files
 
@@ -31,7 +34,18 @@ The wallet verifier prototype is a separate Flask app in the repo root (`../app.
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install -r ../requirements.txt
-.venv/bin/streamlit run webapp/app.py
+# Terminal 1: wallet verifier. PUBLIC_BASE_URL must be a public HTTPS URL
+# (for example a tunnel URL) that the wallet can POST its callback to.
+PUBLIC_BASE_URL=https://your-tunnel.example.com \
+  .venv/bin/uvicorn eudi_login.service:app --host 0.0.0.0 --port 5000
+
+# Terminal 2: protected EIS site.
+EUDI_API_URL=http://localhost:5000 \
+ALLOWED_NATIONALITIES=PT,DE,FR,NL,IT,ES,SK \
+  .venv/bin/streamlit run webapp/app.py
 ```
 
 Then open http://localhost:8501 (Streamlit's default port).
+
+This remains a prototype verifier: it does not yet perform production-grade
+signature, trust-chain, key-binding, nonce/audience, or revocation validation.
