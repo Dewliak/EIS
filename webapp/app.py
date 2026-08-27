@@ -14,7 +14,10 @@ Run:  streamlit run webapp/app.py
 """
 
 import os
+import re
+import secrets
 import sys
+from datetime import date, datetime, timedelta
 from html import escape
 from pathlib import Path
 
@@ -57,6 +60,8 @@ st.markdown(
       .deadline-action { margin-top: .35rem; color: #52627a; font-size: 1rem; }
       .deadline-details { display: flex; flex-wrap: wrap; gap: .45rem 1.4rem; margin-top: .8rem; padding-top: .7rem; border-top: 1px solid #edf1f7; color: #52627a; font-size: .92rem; }
       .deadline-details strong { color: #172b4d; font-weight: 700; }
+      .wallet-status { display: inline-block; margin: .1rem 0 .75rem; padding: .3rem .6rem; border-radius: .35rem; background: #edf7f1; color: #17623a; font-size: .86rem; font-weight: 700; }
+      .wallet-status.pending { background: #f1f4f8; color: #52627a; }
       @media (max-width: 640px) {
         .deadline-item { gap: .8rem; grid-template-columns: 1.9rem 1fr; }
         .deadline-timeline::before { left: .92rem; }
@@ -77,6 +82,10 @@ def _init_state():
     st.session_state.setdefault("country", None)
     st.session_state.setdefault("intent", None)
     st.session_state.setdefault("subject", None)
+    st.session_state.setdefault("wallet_documents", set())
+    st.session_state.setdefault("inform_stage", "draft")
+    st.session_state.setdefault("inform_draft", None)
+    st.session_state.setdefault("travel_notification", None)
 
 
 def _wallet_login() -> EUDIWalletLogin:
@@ -121,6 +130,10 @@ def header(user):
         st.caption(f"Wallet verified · {', '.join(user.nationalities)}")
         if st.button("Sign out", use_container_width=True):
             _wallet_login().sign_out()
+            st.session_state.wallet_documents.clear()
+            st.session_state.travel_notification = None
+            st.session_state.inform_draft = None
+            st.session_state.inform_stage = "draft"
             _reset("country")
             st.rerun()
         if st.button("Start over", use_container_width=True):
@@ -208,18 +221,156 @@ def step_subject():
 # ---------------------------------------------------------------------------
 
 def inform_with_id():
-    """The wallet-gated travel-notification button (stub for now)."""
-    with st.container(border=True):
-        cols = st.columns([0.7, 0.3])
-        with cols[0]:
-            st.markdown("**Inform with ID** — notify your destination (and Portugal) that you are "
-                        "traveling, using the EU Digital Identity Wallet.")
-            st.caption("Wallet-gated feature. EUDI Wallets become mandatory 24 Dec 2026; production "
-                       "wallets land ~2027 (docs/09 §6.2). Disabled until the wallet layer is wired in.")
-        with cols[1]:
-            st.button("Inform with ID", disabled=True, use_container_width=True,
-                      help="Coming with the EUDI Wallet integration (~2027).")
+    """Render the prototype travel-notification flow."""
+    destination = data.get_country(st.session_state.country)
+    notification = st.session_state.travel_notification
 
+    with st.container(border=True):
+        st.markdown("### Inform with ID")
+        if notification and notification["destination_country"] != destination["code"]:
+            existing_destination = data.get_country(notification["destination_country"])["name"]
+            st.info(f"You already have an active travel notification for {existing_destination}. Delete it before creating a notification for {destination['name']}.")
+            if st.button("Delete existing travel notification", key="delete_existing_travel_notification"):
+                st.session_state.travel_notification = None
+                st.session_state.inform_draft = None
+                st.session_state.inform_stage = "draft"
+                st.rerun()
+            return
+
+        if notification:
+            st.success("Travel notification registered with the origin-country registry.")
+            details = [
+                ("Reference", notification["reference"]),
+                ("Destination", data.get_country(notification["destination_country"])["name"]),
+                ("Travel period", f'{notification["travel_start"]} to {notification["travel_end"]}'),
+                ("Data retained until", notification["retention_until"]),
+                ("Contact channels", "Phone and app push" if notification["push_enabled"] else "Phone"),
+            ]
+            st.table(dict(details))
+            st.caption("Prototype record stored in this browser session. No authority or messaging service has been contacted.")
+            if st.button("Delete travel notification", key="delete_travel_notification"):
+                st.session_state.travel_notification = None
+                st.session_state.inform_draft = None
+                st.session_state.inform_stage = "draft"
+                st.rerun()
+            return
+
+        st.write("Notify Portugal that you will be travelling to the selected destination. This helps establish a verified record for future assistance.")
+        st.caption("Prototype flow: your destination, dates and contact details are reviewed before simulated EU Wallet approval. Precise location is not requested.")
+
+        if st.session_state.inform_stage == "draft":
+            if st.button("Start travel notification", key="start_travel_notification", type="primary", use_container_width=True):
+                st.session_state.inform_stage = "form"
+                st.rerun()
+            return
+
+        if st.session_state.inform_stage == "form":
+            existing_draft = st.session_state.inform_draft or {}
+            with st.form("travel_notification_form"):
+                start_date = st.date_input(
+                    "Travel starts",
+                    value=date.fromisoformat(existing_draft["travel_start"]) if existing_draft.get("travel_start") else date.today(),
+                    min_value=date.today(),
+                )
+                end_date = st.date_input(
+                    "Travel ends",
+                    value=date.fromisoformat(existing_draft["travel_end"]) if existing_draft.get("travel_end") else date.today() + timedelta(days=7),
+                    min_value=date.today(),
+                )
+                phone_number = st.text_input(
+                    "Phone number for emergency SMS fallback",
+                    value=existing_draft.get("phone_number", ""),
+                    placeholder="+351 900 000 000",
+                )
+                push_enabled = st.checkbox("Enable app push notifications", value=existing_draft.get("push_enabled", True))
+                submitted = st.form_submit_button("Review notification", type="primary", use_container_width=True)
+
+            if submitted:
+                phone = phone_number.strip()
+                if end_date < start_date:
+                    st.error("Travel end date must be on or after the start date.")
+                elif not re.fullmatch(r"\+?[0-9][0-9\s().-]{6,19}", phone):
+                    st.error("Enter a valid phone number, including the country code.")
+                else:
+                    st.session_state.inform_draft = {
+                        "origin_country": data.ORIGIN["code"],
+                        "destination_country": destination["code"],
+                        "travel_start": start_date.isoformat(),
+                        "travel_end": end_date.isoformat(),
+                        "phone_number": phone,
+                        "push_enabled": push_enabled,
+                    }
+                    st.session_state.pop("inform_retention_until", None)
+                    st.session_state.inform_stage = "consent_review"
+                    st.rerun()
+            return
+
+        if st.session_state.inform_stage == "wallet_approval":
+            st.info("The wallet has received a request to approve this travel notification.")
+            st.markdown("#### Confirm in your EU Wallet")
+            st.write("This demo simulates the user approving the notification with the verified wallet session.")
+            if st.button("Confirm in EU Wallet (demo)", key="confirm_wallet_travel_notification", type="primary", use_container_width=True):
+                draft = st.session_state.inform_draft
+                end = date.fromisoformat(draft["travel_end"])
+                retention = st.session_state.get("inform_retention_until", end + timedelta(days=30))
+                st.session_state.travel_notification = {
+                    "reference": f'PT-{secrets.token_hex(4).upper()}',
+                    "subject": st.session_state.eudi_user.subject,
+                    "origin_country": draft["origin_country"],
+                    "destination_country": draft["destination_country"],
+                    "travel_start": draft["travel_start"],
+                    "travel_end": draft["travel_end"],
+                    "phone_number": draft["phone_number"],
+                    "push_enabled": draft["push_enabled"],
+                    "retention_until": retention.isoformat(),
+                    "consented_at": datetime.now().isoformat(timespec="seconds"),
+                    "status": "registered",
+                }
+                st.session_state.inform_draft = None
+                st.session_state.inform_stage = "registered"
+                st.rerun()
+            return
+
+        draft = st.session_state.inform_draft
+        if not draft:
+            st.session_state.inform_stage = "draft"
+            st.rerun()
+
+        start = date.fromisoformat(draft["travel_start"])
+        end = date.fromisoformat(draft["travel_end"])
+        default_retention = end + timedelta(days=30)
+        retention_until = st.date_input(
+            "Keep notification until",
+            value=default_retention,
+            min_value=end,
+            max_value=default_retention,
+            key="inform_retention_until",
+            help="The default is 30 days after travel ends. You may shorten this period.",
+        )
+        st.markdown("#### Review before wallet approval")
+        st.table({
+            "Information": ["Origin country", "Destination", "Travel period", "Phone number", "App push", "Retention"],
+            "Value": [
+                data.ORIGIN["name"],
+                destination["name"],
+                f"{start.isoformat()} to {end.isoformat()}",
+                draft["phone_number"],
+                "Enabled" if draft["push_enabled"] else "Disabled",
+                retention_until.isoformat(),
+            ],
+        })
+        st.warning("By continuing, you consent to this prototype sharing the information above with the Portugal origin-country registry. The destination country is recorded as the intended destination but is not contacted in this prototype.")
+        review_cols = st.columns(2)
+        with review_cols[0]:
+            if st.button("Back and edit", key="edit_travel_notification", use_container_width=True):
+                st.session_state.pop("inform_retention_until", None)
+                st.session_state.inform_stage = "form"
+                st.rerun()
+        with review_cols[1]:
+            if st.button("Approve with EU Wallet (demo)", key="approve_travel_notification", type="primary", use_container_width=True):
+                st.session_state.inform_stage = "wallet_approval"
+                st.rerun()
+        return
 
 def deadline_timeline(deadlines):
     """Render deadline milestones as a vertical, date-ordered timeline."""
@@ -244,6 +395,25 @@ def deadline_timeline(deadlines):
                 </div>'''
         )
     st.markdown(f'<div class="deadline-timeline">{"".join(items)}</div>', unsafe_allow_html=True)
+
+
+def wallet_document_action(doc):
+    """Prototype wallet action; replace with a real issuer flow later."""
+    document_name = doc["name"]
+    if document_name in st.session_state.wallet_documents:
+        st.markdown('<div class="wallet-status">Available in this session’s wallet</div>', unsafe_allow_html=True)
+        st.caption("Demo credential only. A production version would be issued by the relevant authority.")
+        return
+
+    st.markdown('<div class="wallet-status pending">Not yet available in wallet</div>', unsafe_allow_html=True)
+    if st.button(
+        "Add to EU Wallet (demo)",
+        key=f"wallet_{document_name}",
+        use_container_width=True,
+        help="Simulates an authority issuing this document to the wallet.",
+    ):
+        st.session_state.wallet_documents.add(document_name)
+        st.rerun()
 
 
 def dashboard():
@@ -287,6 +457,7 @@ def dashboard():
                 }
                 for k, v in meta.items():
                     st.markdown(f"- **{k}:** {v}")
+                wallet_document_action(doc)
                 bcols = st.columns(2)
                 with bcols[0]:
                     if doc["form_url"]:
