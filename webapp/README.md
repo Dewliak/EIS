@@ -1,12 +1,12 @@
-# EIS web app (Streamlit prototype)
+# EU Data Compass web app (Streamlit prototype)
 
-Portugal-hosted instance of the EIS mobility platform. Origin is fixed to
+Portugal-hosted instance of the EU Data Compass mobility platform. Origin is fixed to
 Portugal; the user picks a destination, an intent (traveling / moving), and a
 subject, then lands in the **Deadlines · Documents · Information** dashboard.
 
 Access to the whole app is **gated by the EUDI Wallet verifier** — the Streamlit
 client shows a QR sign-in request and only the configured nationalities are let
-in before any EIS content renders.
+in before any content renders.
 
 > **Prototype, not the target.** The build target is the multi-page EU-portal
 > app in [`../docs/01-plan/IMPLEMENTATION-PLAN.md`](../docs/01-plan/IMPLEMENTATION-PLAN.md)
@@ -52,7 +52,7 @@ python3 -m venv .venv
 PUBLIC_BASE_URL=https://your-tunnel.example.com \
   .venv/bin/uvicorn eudi_login.service:app --host 0.0.0.0 --port 5000
 
-# Terminal 2 — the gated EIS site.
+# Terminal 2 — the gated EU Data Compass site.
 EUDI_API_URL=http://localhost:5000 \
 ALLOWED_NATIONALITIES=PT,DE,FR,NL,IT,ES,SK \
   .venv/bin/streamlit run webapp/app.py --server.port 8501
@@ -61,4 +61,4 @@ ALLOWED_NATIONALITIES=PT,DE,FR,NL,IT,ES,SK \
 Open **http://localhost:8501**. The QR uses SVG (no Pillow dependency).
 
 > Prototype verifier: no production-grade signature, trust-chain, key-binding,
-> nonce/audience, or revocation checks yet.
+> nonce/audience, or revocation validation.

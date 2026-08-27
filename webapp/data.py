@@ -1,5 +1,5 @@
 """
-EIS content dataset — Portugal-hosted instance (origin = Portugal).
+ EU Data Compass content dataset — Portugal-hosted instance (origin = Portugal).
 
 Structure mirrors the data model in docs/02-spec/PLATFORM-SPEC.md §8:
 
