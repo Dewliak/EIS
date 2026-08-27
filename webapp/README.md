@@ -1,6 +1,6 @@
-# EIS web app (Streamlit)
+# EU Data Compass web app (Streamlit)
 
-Portugal-hosted instance of the EIS mobility platform. Origin is fixed to
+Portugal-hosted instance of the EU Data Compass mobility platform. Origin is fixed to
 Portugal; the user picks a destination, an intent (traveling / moving), and a
 subject, then lands in the **Deadlines · Documents · Information** dashboard
 (the flow specified in `../docs/00-PLATFORM-CONCEPT.md` and `../docs/09-FULL-PLATFORM-SPEC.md`).
@@ -21,7 +21,7 @@ Only the **Residence & Registration** subject is live; other subjects are stubbe
 wallet-gated stubs (disabled) — the EUDI Wallet layer lands ~2027 (`docs/09` §6.2).
 
 Access to the site itself is protected by the EUDI Wallet verifier in
-`../eudi_login/`. The Streamlit client shows its QR request before any EIS content
+`../eudi_login/`. The Streamlit client shows its QR request before any EU Data Compass content
 is rendered and permits only the configured nationalities.
 
 ## Files
@@ -39,7 +39,7 @@ python3 -m venv .venv
 PUBLIC_BASE_URL=https://your-tunnel.example.com \
   .venv/bin/uvicorn eudi_login.service:app --host 0.0.0.0 --port 5000
 
-# Terminal 2: protected EIS site.
+# Terminal 2: protected EU Data Compass site.
 EUDI_API_URL=http://localhost:5000 \
 ALLOWED_NATIONALITIES=PT,DE,FR,NL,IT,ES,SK \
   .venv/bin/streamlit run webapp/app.py
