@@ -35,4 +35,35 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Flood warning · Berlin'), findsOneWidget);
   });
+
+  testWidgets('multiple trips: add a second, delete one via hold menu', (WidgetTester tester) async {
+    Future<void> informOnce(Finder trigger) async {
+      await tester.tap(trigger);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Sign with EU ID Wallet & inform'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Approve & share'));
+      await tester.pump();
+      await tester.pump(const Duration(seconds: 2));
+      await tester.pumpAndSettle();
+    }
+
+    await tester.pumpWidget(const CitizenApp());
+    await informOnce(find.text('Inform your government'));
+    expect(find.text('Guarded'), findsOneWidget);
+
+    await informOnce(find.text('Add another trip'));
+    expect(find.text('Guarded'), findsNWidgets(2));
+
+    // Hold a card -> Delete -> confirm.
+    await tester.longPress(find.text('Guarded').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete trip'));
+    await tester.pumpAndSettle();
+    expect(find.text('Delete this trip?'), findsOneWidget);
+    await tester.tap(find.text('Delete'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Guarded'), findsOneWidget);
+  });
 }
