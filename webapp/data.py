@@ -52,6 +52,13 @@ INTENTS = [
     {"id": "moving", "name": "Moving in", "sub": "Long stay / relocation", "icon": "📦"},
 ]
 
+TRAVEL_PURPOSES = [
+    {"id": "tourism", "name": "Tourism", "description": "Holiday or sightseeing"},
+    {"id": "business", "name": "Business or conference", "description": "Meetings, conference, or business event"},
+    {"id": "family", "name": "Visiting family or friends", "description": "Private visit"},
+    {"id": "remote_work", "name": "Short-term remote work", "description": "Working remotely while temporarily visiting"},
+]
+
 
 # ---------------------------------------------------------------------------
 # Universal short-stay baseline (freedom of movement — verified, docs/02).
@@ -115,6 +122,168 @@ def _traveling_residence(dest_name):
         "sources": [
             "EU freedom of movement — https://europa.eu/youreurope/citizens/residence/",
             "EHIC — https://ehic.europa.eu/",
+        ],
+    }
+
+
+def _germany_traveling(purpose_id=None, travel_context=None):
+    """Verified Germany T1 short-stay content for the Portugal demo case."""
+    purpose = next((p for p in TRAVEL_PURPOSES if p["id"] == purpose_id), TRAVEL_PURPOSES[1])
+    travel_context = travel_context or {}
+    city = travel_context.get("city", "Berlin")
+    start = travel_context.get("start_date")
+    end = travel_context.get("end_date")
+    duration = travel_context.get("duration_days")
+    trip_line = f"{city}"
+    if start and end:
+        trip_line += f" · {start} to {end}"
+    if duration:
+        trip_line += f" · {duration} days"
+
+    purpose_notes = {
+        "tourism": "For tourism, no German residence registration is needed for a genuine temporary visit.",
+        "business": "Attending a conference or business meeting is different from taking up employment in Germany. Paid work or a local employment arrangement may require a separate assessment.",
+        "family": "Visiting family or friends does not by itself create a German residence-registration requirement for a genuine temporary visit.",
+        "remote_work": "Short-term remote work can have separate tax, employment, and social-security consequences. Confirm your personal situation before relying on this travel case.",
+    }
+
+    return {
+        "verified": True,
+        "demo_title": f"Portugal → {trip_line}",
+        "demo_purpose": purpose["name"],
+        "summary": (
+            f"As a Portuguese EU citizen, you can make a temporary visit to Germany for up to **3 months** "
+            f"with a valid national ID card or passport. This Germany case is set up for **{purpose['name'].lower()}**. "
+            f"{purpose_notes[purpose_id or 'business']}"
+        ),
+        "deadlines": [
+            {
+                "trigger": "Before departure",
+                "action": "Check that your Portuguese national ID card or passport is valid for the trip.",
+                "window": "before travel",
+                "fine": "—",
+                "source_label": "EU Equal Treatment Office — Residence",
+                "source_url": "https://www.eu-gleichbehandlungsstelle.de/eugs-en/eu-citizens/information-center/residence",
+            },
+            {
+                "trigger": "Before departure",
+                "action": "Obtain or verify your European Health Insurance Card (EHIC).",
+                "window": "before travel",
+                "fine": "—",
+                "source_label": "European Commission — EHIC",
+                "source_url": "https://employment-social-affairs.ec.europa.eu/policies-and-activities/moving-working-europe/eu-social-security-coordination/european-health-insurance-card_en",
+            },
+            {
+                "trigger": "Arrival in Germany",
+                "action": "No visa, residence permit, or Anmeldung for a genuine temporary visit in this case.",
+                "window": "up to 3 months",
+                "fine": "—",
+                "source_label": "Your Europe — Residence rights",
+                "source_url": "https://europa.eu/youreurope/citizens/residence/residence-rights/index_en.htm",
+            },
+            {
+                "trigger": "During the stay",
+                "action": "Carry your ID and use the EHIC if medically necessary state healthcare is needed.",
+                "window": "throughout trip",
+                "fine": "—",
+                "source_label": "European Commission — EHIC",
+                "source_url": "https://employment-social-affairs.ec.europa.eu/policies-and-activities/moving-working-europe/eu-social-security-coordination/european-health-insurance-card_en",
+            },
+            {
+                "trigger": "Before the 3-month boundary",
+                "action": "Reassess the trip. If you establish residence, switch to the Moving in flow.",
+                "window": "before 3 months",
+                "fine": "case-dependent",
+                "source_label": "Your Europe — Residence rights",
+                "source_url": "https://europa.eu/youreurope/citizens/residence/residence-rights/index_en.htm",
+            },
+        ],
+        "documents": [
+            {
+                "name": "Valid Portuguese national ID card or passport",
+                "required": "required",
+                "initial_info": "The required identity document for entering and staying in Germany as a Portuguese EU citizen.",
+                "shared": "Identity and nationality, when requested",
+                "to_whom": "Border or competent authority if requested",
+                "retention": "Carried by you during the trip",
+                "reissuable": "Yes — Portuguese issuing authority",
+                "submit_where": "Keep with you",
+                "issuer": "Portuguese competent authority",
+                "form_url": None,
+                "source_label": "EU Equal Treatment Office — Residence",
+                "source_url": "https://www.eu-gleichbehandlungsstelle.de/eugs-en/eu-citizens/information-center/residence",
+            },
+            {
+                "name": "European Health Insurance Card (EHIC)",
+                "required": "recommended",
+                "initial_info": "Provides access to medically necessary, state-provided healthcare during a temporary stay under the applicable coordination rules. It is not travel insurance.",
+                "shared": "Insurance and identity details with the healthcare provider",
+                "to_whom": "German healthcare provider",
+                "retention": "Card validity period",
+                "reissuable": "Yes — Portuguese health institution",
+                "submit_where": "Show at the healthcare provider",
+                "issuer": "Portuguese health institution",
+                "form_url": "https://ehic.europa.eu/",
+                "source_label": "European Commission — EHIC",
+                "source_url": "https://employment-social-affairs.ec.europa.eu/policies-and-activities/moving-working-europe/eu-social-security-coordination/european-health-insurance-card_en",
+            },
+            {
+                "name": "Private travel insurance",
+                "required": "optional",
+                "initial_info": "Optional extra cover for areas such as repatriation, cancellation, or luggage. It does not replace the EHIC.",
+                "shared": "As required by the insurer",
+                "to_whom": "Insurer or assistance provider",
+                "retention": "Policy period",
+                "reissuable": "According to insurer",
+                "submit_where": "Keep policy details accessible",
+                "issuer": "Chosen insurer",
+                "form_url": None,
+                "source_label": "Your Europe — Travel documents and formalities",
+                "source_url": "https://europa.eu/youreurope/citizens/health/unplanned-healthcare/temporary-stays/index_en.htm",
+            },
+            {
+                "name": "German visa",
+                "required": "not_required",
+                "initial_info": "Not required for a Portuguese EU citizen visiting Germany under this short-stay scenario.",
+                "shared": "—",
+                "to_whom": "—",
+                "retention": "—",
+                "reissuable": "—",
+                "submit_where": "—",
+                "issuer": "—",
+                "form_url": None,
+                "source_label": "Your Europe — Residence rights",
+                "source_url": "https://europa.eu/youreurope/citizens/residence/residence-rights/index_en.htm",
+            },
+            {
+                "name": "German residence registration (Anmeldung)",
+                "required": "not_required",
+                "initial_info": "Not required for a genuine temporary visit. If the trip becomes a move or residence is established, use the Moving in flow instead.",
+                "shared": "—",
+                "to_whom": "—",
+                "retention": "—",
+                "reissuable": "—",
+                "submit_where": "—",
+                "issuer": "—",
+                "form_url": None,
+                "source_label": "EU Equal Treatment Office — Residence",
+                "source_url": "https://www.eu-gleichbehandlungsstelle.de/eugs-en/eu-citizens/information-center/residence",
+            },
+        ],
+        "info": [
+            {"label": "Stay length", "value": "Up to 3 months for a temporary visit", "source_label": "Your Europe — Residence rights", "source_url": "https://europa.eu/youreurope/citizens/residence/residence-rights/index_en.htm"},
+            {"label": "Visa", "value": "Not needed for Portuguese EU citizens in this case", "source_label": "EU Equal Treatment Office — Residence", "source_url": "https://www.eu-gleichbehandlungsstelle.de/eugs-en/eu-citizens/information-center/residence"},
+            {"label": "Registration", "value": "No Anmeldung for a genuine temporary visit; switch to Moving if residence is established", "source_label": "EU Equal Treatment Office — Residence", "source_url": "https://www.eu-gleichbehandlungsstelle.de/eugs-en/eu-citizens/information-center/residence"},
+            {"label": "Healthcare", "value": "EHIC supports medically necessary state healthcare during a temporary stay; it is not travel insurance", "source_label": "European Commission — EHIC", "source_url": "https://employment-social-affairs.ec.europa.eu/policies-and-activities/moving-working-europe/eu-social-security-coordination/european-health-insurance-card_en"},
+            {"label": "Mobile roaming", "value": "EU Roam Like at Home applies, subject to fair-use safeguards", "source_label": "European Commission — Roaming", "source_url": "https://digital-strategy.ec.europa.eu/en/policies/roaming"},
+            {"label": "Emergency", "value": "Call 112 for emergency services in Germany", "source_label": "Your Europe — Emergencies", "source_url": "https://europa.eu/youreurope/citizens/travel/security-and-emergencies/emergency/index_en.htm"},
+            {"label": "Purpose note", "value": purpose_notes[purpose_id or "business"], "source_label": "EU Equal Treatment Office — Residence", "source_url": "https://www.eu-gleichbehandlungsstelle.de/eugs-en/eu-citizens/information-center/residence"},
+        ],
+        "sources": [
+            "EU Equal Treatment Office — Residence",
+            "Your Europe — Residence rights",
+            "European Commission — EHIC",
+            "European Commission — Roaming",
         ],
     }
 
@@ -458,7 +627,7 @@ def get_country(code):
     return None
 
 
-def get_content(country_code, intent_id, subject_id):
+def get_content(country_code, intent_id, subject_id, travel_purpose=None, travel_context=None):
     """Return the dashboard dict for a (country, intent, subject), or None."""
     if subject_id != "residence":
         return None  # only residence is live in the MVP
@@ -468,6 +637,8 @@ def get_content(country_code, intent_id, subject_id):
         return None
 
     if intent_id == "traveling":
+        if country_code == "DE":
+            return _germany_traveling(travel_purpose, travel_context)
         return _traveling_residence(country["name"])
 
     # moving
