@@ -7,7 +7,11 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:shared_preferences/shared_preferences.dart';
 
 // How long after informing the (simulated) emergency arrives. Small for the demo.
-const emergencyDelaySeconds = int.fromEnvironment('EMERGENCY_DELAY', defaultValue: 15);
+const emergencyDelaySeconds = int.fromEnvironment('EMERGENCY_DELAY', defaultValue: 2);
+
+// Test hook: lets widget tests that don't exercise the emergency turn the
+// auto-fire off so its timer doesn't perturb the UI. Always true in the app.
+bool autoEmergencyEnabled = true;
 
 const _channelId = 'emergency_alerts';
 final FlutterLocalNotificationsPlugin _fln = FlutterLocalNotificationsPlugin();
@@ -225,7 +229,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (mounted) setState(() => emergencyActive = false);
       return;
     }
-    if (!emergencyActive && _timer == null) {
+    if (!emergencyActive && _timer == null && autoEmergencyEnabled) {
       _resetEmergencyResponse();
       await _scheduleEmergencyNotification();
       _timer = Timer(const Duration(seconds: emergencyDelaySeconds), () {

@@ -11,6 +11,7 @@ void main() {
   });
 
   testWidgets('inform (no phone) -> guarded -> emergency appears after the delay', (WidgetTester tester) async {
+    autoEmergencyEnabled = true;
     await tester.pumpWidget(const CitizenApp());
     expect(find.text('Inform your government'), findsOneWidget);
 
@@ -48,6 +49,7 @@ void main() {
   });
 
   testWidgets('multiple trips: add a second, delete one via hold menu', (WidgetTester tester) async {
+    autoEmergencyEnabled = false;
     Future<void> informOnce(Finder trigger) async {
       await tester.tap(trigger);
       await tester.pumpAndSettle();
