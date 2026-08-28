@@ -5,6 +5,22 @@ import 'package:http/http.dart' as http;
 
 const apiBaseUrl = String.fromEnvironment('API_BASE_URL', defaultValue: 'http://10.0.2.2:8080');
 
+// Standalone demo: no backend required. Everything below is mocked in-app.
+// Pass --dart-define=USE_MOCK=false to talk to a real backend instead.
+const useMockData = bool.fromEnvironment('USE_MOCK', defaultValue: true);
+
+final _mockAlerts = <Map<String, dynamic>>[
+  {
+    'id': 1,
+    'severity': 'severe',
+    'title': 'Flood warning for Berlin',
+    'body': 'A simulated satellite observation indicates flooding risk near Berlin.',
+    'instructions': 'Move to higher ground, follow official guidance, and call 112 in immediate danger.',
+    'source_url': 'https://www.copernicus.eu/en/copernicus-services/emergency',
+    'satellite_status': 'Simulated (Copernicus EMS demo)',
+  },
+];
+
 class ApiClient {
   String? token;
   Map<String, String> get headers => {'Content-Type': 'application/json', if (token != null) 'Authorization': 'Bearer $token'};
@@ -51,19 +67,30 @@ class _EmergencyHomeState extends State<EmergencyHome> {
   Future<void> start() async {
     setState(() => loading = true);
     try {
-      final session = await api.post('/api/demo/citizen/session');
-      api.token = session['access_token'];
-      await api.post('/api/citizen/registrations', {
-        'destination_country': 'DE', 'destination_region': 'Berlin',
-        'travel_start': '2026-01-01T00:00:00+00:00', 'travel_end': '2027-12-31T23:59:59+00:00',
-        'push_enabled': true,
-      });
-      await refresh();
+      if (useMockData) {
+        await Future.delayed(const Duration(milliseconds: 400)); // feel like a real handshake
+        api.token = 'demo-token';
+        alerts = List<Map<String, dynamic>>.from(_mockAlerts);
+        message = alerts.isEmpty ? 'No active emergency alerts.' : 'Emergency information requires your attention.';
+      } else {
+        final session = await api.post('/api/demo/citizen/session');
+        api.token = session['access_token'];
+        await api.post('/api/citizen/registrations', {
+          'destination_country': 'DE', 'destination_region': 'Berlin',
+          'travel_start': '2026-01-01T00:00:00+00:00', 'travel_end': '2027-12-31T23:59:59+00:00',
+          'push_enabled': true,
+        });
+        await refresh();
+      }
     } catch (error) { setState(() => message = 'Unable to connect: $error'); }
     if (mounted) setState(() => loading = false);
   }
 
   Future<void> refresh() async {
+    if (useMockData) {
+      setState(() => message = alerts.isEmpty ? 'No active emergency alerts.' : 'Emergency information requires your attention.');
+      return;
+    }
     final result = await api.get('/api/citizen/alerts');
     if (mounted) setState(() { alerts = result['alerts'] as List<dynamic>; message = alerts.isEmpty ? 'No active emergency alerts.' : 'Emergency information requires your attention.'; });
   }
@@ -77,18 +104,31 @@ class _EmergencyHomeState extends State<EmergencyHome> {
     if (approved == true) await start();
   }
 
-  Future<void> action(int id, String action) async { await api.post('/api/citizen/alerts/$id/$action'); await refresh(); }
+  Future<void> action(int id, String action) async {
+    if (useMockData) {
+      setState(() => message = action == 'safe' ? 'Thank you — you are marked safe.' : 'Alert acknowledged.');
+      return;
+    }
+    await api.post('/api/citizen/alerts/$id/$action');
+    await refresh();
+  }
 
   Future<void> shareLocation(int id) async {
-    final permission = await Geolocator.requestPermission();
-    if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) throw Exception('Location permission was not granted');
-    final position = await Geolocator.getCurrentPosition();
-    await api.post('/api/citizen/alerts/$id/location-consent');
-    await api.post('/api/citizen/alerts/$id/location-checkins', {
-      'latitude': position.latitude, 'longitude': position.longitude,
-      'accuracy_meters': position.accuracy, 'captured_at': DateTime.now().toUtc().toIso8601String(),
-    });
-    setState(() => message = 'Location check-in sent. The next check-in is available tomorrow.');
+    try {
+      final permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) throw Exception('Location permission was not granted');
+      final position = await Geolocator.getCurrentPosition();
+      if (!useMockData) {
+        await api.post('/api/citizen/alerts/$id/location-consent');
+        await api.post('/api/citizen/alerts/$id/location-checkins', {
+          'latitude': position.latitude, 'longitude': position.longitude,
+          'accuracy_meters': position.accuracy, 'captured_at': DateTime.now().toUtc().toIso8601String(),
+        });
+      }
+      setState(() => message = 'Location shared (${position.latitude.toStringAsFixed(3)}, ${position.longitude.toStringAsFixed(3)}). Next check-in available tomorrow.');
+    } catch (error) {
+      setState(() => message = 'Could not share location: $error');
+    }
   }
 
   @override
@@ -129,24 +169,26 @@ class _WalletMockScreenState extends State<WalletMockScreen> {
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: const Color(0xff0b1f4d),
     body: SafeArea(child: Padding(padding: const EdgeInsets.all(24), child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      const SizedBox(height: 12),
-      Center(child: Image.asset('assets/logo.png', height: 96)),
-      const SizedBox(height: 16),
-      const Text('EU Digital Identity Wallet', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
-      const SizedBox(height: 4),
-      const Text('Simulated — demo verification only', textAlign: TextAlign.center, style: TextStyle(color: Colors.white70)),
-      const SizedBox(height: 28),
-      const Card(child: Padding(padding: EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('EU Data Compass is requesting:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        SizedBox(height: 10),
-        ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.flag), title: Text('Nationality'), subtitle: Text('Portugal (PT)')),
-        ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.person), title: Text('Name'), subtitle: Text('Demo Traveller')),
-        SizedBox(height: 6),
-        Text('Only these attributes are shared. Selective disclosure keeps everything else private.', style: TextStyle(color: Colors.black54)),
+      Expanded(child: SingleChildScrollView(child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        const SizedBox(height: 12),
+        Center(child: Image.asset('assets/logo.png', height: 96)),
+        const SizedBox(height: 16),
+        const Text('EU Digital Identity Wallet', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 4),
+        const Text('Simulated — demo verification only', textAlign: TextAlign.center, style: TextStyle(color: Colors.white70)),
+        const SizedBox(height: 28),
+        const Card(child: Padding(padding: EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('EU Data Compass is requesting:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          SizedBox(height: 10),
+          ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.flag), title: Text('Nationality'), subtitle: Text('Portugal (PT)')),
+          ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.person), title: Text('Name'), subtitle: Text('Demo Traveller')),
+          SizedBox(height: 6),
+          Text('Only these attributes are shared. Selective disclosure keeps everything else private.', style: TextStyle(color: Colors.black54)),
+        ]))),
+        const SizedBox(height: 16),
       ]))),
-      const Spacer(),
       if (verifying)
-        const Column(children: [CircularProgressIndicator(color: Colors.white), SizedBox(height: 12), Text('Verifying with your wallet…', style: TextStyle(color: Colors.white))])
+        const Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Column(children: [CircularProgressIndicator(color: Colors.white), SizedBox(height: 12), Text('Verifying with your wallet…', style: TextStyle(color: Colors.white))]))
       else
         Column(children: [
           FilledButton(onPressed: approve, style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)), child: const Text('Approve & share')),
