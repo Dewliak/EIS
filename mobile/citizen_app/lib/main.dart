@@ -63,6 +63,15 @@ class _EmergencyHomeState extends State<EmergencyHome> {
     if (mounted) setState(() { alerts = result['alerts'] as List<dynamic>; message = alerts.isEmpty ? 'No active emergency alerts.' : 'Emergency information requires your attention.'; });
   }
 
+  Future<void> verifyWithWallet() async {
+    // Mocked EUDI Wallet round-trip: hand off to the wallet screen, and only
+    // continue (open the session) once the user "approves" in the wallet.
+    final approved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => const WalletMockScreen()),
+    );
+    if (approved == true) await start();
+  }
+
   Future<void> action(int id, String action) async { await api.post('/api/citizen/alerts/$id/$action'); await refresh(); }
 
   Future<void> shareLocation(int id) async {
@@ -85,7 +94,7 @@ class _EmergencyHomeState extends State<EmergencyHome> {
       const SizedBox(height: 8),
       Text(message, style: const TextStyle(fontSize: 17)),
       const SizedBox(height: 20),
-      if (api.token == null) FilledButton(onPressed: start, child: const Text('Open demo wallet')),
+      if (api.token == null) FilledButton.icon(onPressed: verifyWithWallet, icon: const Icon(Icons.verified_user), label: const Text('Verify with EU ID Wallet')),
       ...alerts.map((raw) { final alert = raw as Map<String, dynamic>; final id = alert['id'] as int; return Card(color: Colors.red.shade50, child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(alert['severity'].toString().toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
         Text(alert['title'].toString(), style: const TextStyle(fontSize: 21, fontWeight: FontWeight.bold)),
@@ -94,5 +103,52 @@ class _EmergencyHomeState extends State<EmergencyHome> {
         const SizedBox(height: 6), Text('Source: ${alert['source_url']}'), Text('Satellite status: ${alert['satellite_status']}'),
       ]))); }),
     ])),
+  );
+}
+
+class WalletMockScreen extends StatefulWidget {
+  const WalletMockScreen({super.key});
+  @override State<WalletMockScreen> createState() => _WalletMockScreenState();
+}
+
+class _WalletMockScreenState extends State<WalletMockScreen> {
+  bool verifying = false;
+
+  Future<void> approve() async {
+    setState(() => verifying = true);
+    await Future.delayed(const Duration(milliseconds: 1400)); // simulate the wallet round-trip
+    if (mounted) Navigator.pop(context, true);
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    backgroundColor: const Color(0xff0b1f4d),
+    body: SafeArea(child: Padding(padding: const EdgeInsets.all(24), child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      const SizedBox(height: 12),
+      Center(child: Image.asset('assets/logo.png', height: 96)),
+      const SizedBox(height: 16),
+      const Text('EU Digital Identity Wallet', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+      const SizedBox(height: 4),
+      const Text('Simulated — demo verification only', textAlign: TextAlign.center, style: TextStyle(color: Colors.white70)),
+      const SizedBox(height: 28),
+      const Card(child: Padding(padding: EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text('EU Data Compass is requesting:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        SizedBox(height: 10),
+        ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.flag), title: Text('Nationality'), subtitle: Text('Portugal (PT)')),
+        ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.person), title: Text('Name'), subtitle: Text('Demo Traveller')),
+        SizedBox(height: 6),
+        Text('Only these attributes are shared. Selective disclosure keeps everything else private.', style: TextStyle(color: Colors.black54)),
+      ]))),
+      const Spacer(),
+      if (verifying)
+        const Column(children: [CircularProgressIndicator(color: Colors.white), SizedBox(height: 12), Text('Verifying with your wallet…', style: TextStyle(color: Colors.white))])
+      else
+        Column(children: [
+          FilledButton(onPressed: approve, style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)), child: const Text('Approve & share')),
+          const SizedBox(height: 10),
+          OutlinedButton(onPressed: () => Navigator.pop(context, false), style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(52), foregroundColor: Colors.white, side: const BorderSide(color: Colors.white54)), child: const Text('Cancel')),
+        ]),
+      const SizedBox(height: 8),
+    ]))),
   );
 }
