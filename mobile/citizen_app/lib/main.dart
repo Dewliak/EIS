@@ -1,156 +1,390 @@
-import 'dart:convert';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:http/http.dart' as http;
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/data/latest.dart' as tzdata;
+import 'package:timezone/timezone.dart' as tz;
 
-const apiBaseUrl = String.fromEnvironment('API_BASE_URL', defaultValue: 'http://10.0.2.2:8080');
+// How long after informing the (simulated) emergency arrives. Small for the demo.
+const emergencyDelaySeconds = int.fromEnvironment('EMERGENCY_DELAY', defaultValue: 15);
 
-// Standalone demo: no backend required. Everything below is mocked in-app.
-// Pass --dart-define=USE_MOCK=false to talk to a real backend instead.
-const useMockData = bool.fromEnvironment('USE_MOCK', defaultValue: true);
+const _channelId = 'emergency_alerts';
+final FlutterLocalNotificationsPlugin _fln = FlutterLocalNotificationsPlugin();
+final GlobalKey<NavigatorState> _navKey = GlobalKey<NavigatorState>();
+// Flipped when the user taps the OS notification; HomeScreen listens.
+final ValueNotifier<bool> _notificationTapped = ValueNotifier(false);
 
-final _mockAlerts = <Map<String, dynamic>>[
-  {
-    'id': 1,
-    'severity': 'severe',
-    'title': 'Flood warning for Berlin',
-    'body': 'A simulated satellite observation indicates flooding risk near Berlin.',
-    'instructions': 'Move to higher ground, follow official guidance, and call 112 in immediate danger.',
-    'source_url': 'https://www.copernicus.eu/en/copernicus-services/emergency',
-    'satellite_status': 'Simulated (Copernicus EMS demo)',
-  },
+// --- Mock emergency content (personalised for Portuguese travellers) --------
+const _alert = {
+  'severity': 'severe',
+  'title': 'Flood warning · Berlin',
+  'body': 'A simulated satellite observation indicates flooding risk in central Berlin.',
+  'source': 'Simulated — Copernicus EMS demo',
+};
+const _ptInstructions = [
+  'Seek higher ground immediately — move to upper floors or elevated areas.',
+  'Do not walk or drive through flood water.',
+  'Keep your phone charged and this app open for updates.',
+  'Call 112 for immediate danger.',
 ];
+const _collectionPoint = {
+  'name': 'Portuguese community collection point (simulated)',
+  'address': 'Portugiesische Gemeinde, Kurfürstenstraße, 10785 Berlin',
+  'lat': 52.5006,
+  'lon': 13.3620,
+  'note': 'After the water recedes, Portuguese citizens can gather here. '
+      'Portuguese consular staff assist with shelter, documents and contact home.',
+};
 
-class ApiClient {
-  String? token;
-  Map<String, String> get headers => {'Content-Type': 'application/json', if (token != null) 'Authorization': 'Bearer $token'};
-  static const _timeout = Duration(seconds: 10);
-  Future<Map<String, dynamic>> post(String path, [Map<String, dynamic>? body]) async {
-    final response = await http
-        .post(Uri.parse('$apiBaseUrl$path'), headers: headers, body: jsonEncode(body ?? {}))
-        .timeout(_timeout, onTimeout: () => throw Exception('Timed out reaching $apiBaseUrl. Is the backend running?'));
-    if (response.statusCode >= 400) throw Exception(response.body);
-    return jsonDecode(response.body) as Map<String, dynamic>;
-  }
-  Future<Map<String, dynamic>> get(String path) async {
-    final response = await http
-        .get(Uri.parse('$apiBaseUrl$path'), headers: headers)
-        .timeout(_timeout, onTimeout: () => throw Exception('Timed out reaching $apiBaseUrl. Is the backend running?'));
-    if (response.statusCode >= 400) throw Exception(response.body);
-    return jsonDecode(response.body) as Map<String, dynamic>;
+Future<void> _initNotifications() async {
+  try {
+    tzdata.initializeTimeZones();
+    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+    await _fln.initialize(
+      const InitializationSettings(android: androidInit),
+      onDidReceiveNotificationResponse: (_) => _notificationTapped.value = true,
+    );
+    final android = _fln.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    await android?.requestNotificationsPermission();
+    await android?.createNotificationChannel(const AndroidNotificationChannel(
+      _channelId, 'Emergency alerts',
+      description: 'Emergency alerts for your informed travel period',
+      importance: Importance.max,
+    ));
+  } catch (_) {/* notifications unavailable (e.g. tests) — the in-app timer still works */}
+}
+
+Future<void> _scheduleEmergencyNotification() async {
+  try {
+    final when = tz.TZDateTime.now(tz.local).add(const Duration(seconds: emergencyDelaySeconds));
+    await _fln.zonedSchedule(
+      1, _alert['title'] as String,
+      'Tap to open EU Data Compass for emergency instructions.',
+      when,
+      const NotificationDetails(android: AndroidNotificationDetails(
+        _channelId, 'Emergency alerts',
+        importance: Importance.max, priority: Priority.high,
+      )),
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+    );
+  } catch (_) {/* no plugin (tests) */}
+}
+
+Future<void> _cancelEmergencyNotification() async {
+  try { await _fln.cancel(1); } catch (_) {}
+}
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await _initNotifications();
+  runApp(const CitizenApp());
+}
+
+class Trip {
+  final String countryCode, countryName, region, phone;
+  final DateTime from, to;
+  Trip({required this.countryCode, required this.countryName, required this.region,
+        required this.phone, required this.from, required this.to});
+  bool get guarded {
+    final now = DateTime.now();
+    return !now.isBefore(DateTime(from.year, from.month, from.day)) &&
+           !now.isAfter(DateTime(to.year, to.month, to.day, 23, 59, 59));
   }
 }
 
-void main() => runApp(const CitizenApp());
+String _fmt(DateTime d) => '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
 class CitizenApp extends StatelessWidget {
   const CitizenApp({super.key});
   @override
   Widget build(BuildContext context) => MaterialApp(
     title: 'EU Data Compass',
+    navigatorKey: _navKey,
     theme: ThemeData(colorSchemeSeed: const Color(0xff174ea6), useMaterial3: true),
-    home: const EmergencyHome(),
+    home: const HomeScreen(),
   );
 }
 
-class EmergencyHome extends StatefulWidget {
-  const EmergencyHome({super.key});
-  @override State<EmergencyHome> createState() => _EmergencyHomeState();
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+  @override State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _EmergencyHomeState extends State<EmergencyHome> {
-  final api = ApiClient();
-  List<dynamic> alerts = [];
-  String message = 'Connect to load your emergency status.';
-  bool loading = false;
+class _HomeScreenState extends State<HomeScreen> {
+  Trip? trip;
+  bool emergencyActive = false;
+  Timer? _timer;
 
-  Future<void> start() async {
-    setState(() => loading = true);
-    try {
-      if (useMockData) {
-        await Future.delayed(const Duration(milliseconds: 400)); // feel like a real handshake
-        api.token = 'demo-token';
-        alerts = List<Map<String, dynamic>>.from(_mockAlerts);
-        message = alerts.isEmpty ? 'No active emergency alerts.' : 'Emergency information requires your attention.';
-      } else {
-        final session = await api.post('/api/demo/citizen/session');
-        api.token = session['access_token'];
-        await api.post('/api/citizen/registrations', {
-          'destination_country': 'DE', 'destination_region': 'Berlin',
-          'travel_start': '2026-01-01T00:00:00+00:00', 'travel_end': '2027-12-31T23:59:59+00:00',
-          'push_enabled': true,
-        });
-        await refresh();
-      }
-    } catch (error) { setState(() => message = 'Unable to connect: $error'); }
-    if (mounted) setState(() => loading = false);
+  @override
+  void initState() {
+    super.initState();
+    _notificationTapped.addListener(_onNotificationTapped);
   }
 
-  Future<void> refresh() async {
-    if (useMockData) {
-      setState(() => message = alerts.isEmpty ? 'No active emergency alerts.' : 'Emergency information requires your attention.');
+  @override
+  void dispose() {
+    _notificationTapped.removeListener(_onNotificationTapped);
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _onNotificationTapped() {
+    if (!_notificationTapped.value) return;
+    _notificationTapped.value = false;
+    if (trip?.guarded == true) {
+      setState(() => emergencyActive = true);
+      _openAlert();
+    }
+  }
+
+  Future<void> _inform() async {
+    final result = await Navigator.of(context).push<Trip>(
+      MaterialPageRoute(builder: (_) => const InformScreen()),
+    );
+    if (result == null) return;
+    setState(() { trip = result; emergencyActive = false; });
+    _timer?.cancel();
+    await _cancelEmergencyNotification();
+    if (result.guarded) {
+      // Emergency should only reach guarded (currently-informed) travellers.
+      await _scheduleEmergencyNotification();
+      _timer = Timer(const Duration(seconds: emergencyDelaySeconds), () {
+        if (mounted && trip?.guarded == true) setState(() => emergencyActive = true);
+      });
+    }
+  }
+
+  Future<void> _cancel() async {
+    _timer?.cancel();
+    await _cancelEmergencyNotification();
+    setState(() { trip = null; emergencyActive = false; });
+  }
+
+  void _openAlert() {
+    _navKey.currentState?.push(MaterialPageRoute(builder: (_) => const AlertDetailScreen()));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = trip;
+    return Scaffold(
+      appBar: AppBar(
+        leading: Padding(padding: const EdgeInsets.all(8), child: Image.asset('assets/logo.png')),
+        title: const Text('EU Data Compass'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(20),
+        child: ListView(children: [
+          const Text('Travel & emergency', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          if (t == null) ...[
+            const Text('Inform your government about your trip so they can reach you in an '
+                'emergency while you are abroad.', style: TextStyle(fontSize: 17)),
+            const SizedBox(height: 20),
+            FilledButton.icon(
+              onPressed: _inform,
+              icon: const Icon(Icons.assignment_turned_in),
+              label: const Text('Inform your government'),
+            ),
+          ] else ...[
+            _statusCard(t),
+            const SizedBox(height: 16),
+            if (emergencyActive && t.guarded) _alertCard(),
+            if (!t.guarded)
+              const Card(color: Color(0xfff1f4f8), child: Padding(padding: EdgeInsets.all(16),
+                child: Text('You are outside your informed travel dates, so emergency alerts are '
+                    'not active. Update your dates to stay guarded.'))),
+            const SizedBox(height: 12),
+            OutlinedButton(onPressed: _inform, child: const Text('Update trip')),
+            TextButton(onPressed: _cancel, child: const Text('Cancel notification')),
+          ],
+        ]),
+      ),
+    );
+  }
+
+  Widget _statusCard(Trip t) {
+    final guarded = t.guarded;
+    return Card(
+      child: Padding(padding: const EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(guarded ? Icons.verified_user : Icons.shield_outlined, color: guarded ? Colors.green.shade700 : Colors.grey),
+          const SizedBox(width: 8),
+          Text(guarded ? 'Guarded' : 'Not active',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: guarded ? Colors.green.shade700 : Colors.grey.shade700)),
+        ]),
+        const SizedBox(height: 6),
+        Text(guarded
+            ? 'You are within your informed period. Your government can reach you in an emergency.'
+            : 'Outside your informed dates.'),
+        const Divider(height: 24),
+        Text('Destination: ${t.countryName} · ${t.region}'),
+        Text('Period: ${_fmt(t.from)} → ${_fmt(t.to)}'),
+        Text('Phone: ${t.phone}'),
+      ])),
+    );
+  }
+
+  Widget _alertCard() => Card(
+    color: Colors.red.shade50,
+    child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [
+        Expanded(child: Text((_alert['severity'] as String).toUpperCase(),
+          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red))),
+        IconButton(onPressed: _openAlert, icon: const Icon(Icons.info_outline), tooltip: 'More information'),
+      ]),
+      Text(_alert['title'] as String, style: const TextStyle(fontSize: 21, fontWeight: FontWeight.bold)),
+      const SizedBox(height: 6),
+      Text(_alert['body'] as String),
+      const SizedBox(height: 12),
+      FilledButton.icon(onPressed: _openAlert, icon: const Icon(Icons.menu_book), label: const Text('View instructions')),
+    ])),
+  );
+}
+
+// --- Inform flow ------------------------------------------------------------
+class InformScreen extends StatefulWidget {
+  const InformScreen({super.key});
+  @override State<InformScreen> createState() => _InformScreenState();
+}
+
+class _InformScreenState extends State<InformScreen> {
+  final destinations = const [
+    {'code': 'DE', 'name': 'Germany', 'region': 'Berlin'},
+    {'code': 'ES', 'name': 'Spain', 'region': 'Madrid'},
+    {'code': 'FR', 'name': 'France', 'region': 'Paris'},
+  ];
+  late Map<String, String> destination = destinations.first;
+  late DateTime from = DateTime.now();
+  late DateTime to = DateTime.now().add(const Duration(days: 14));
+  final phone = TextEditingController(text: '+351 912 345 678');
+
+  Future<void> _pick(bool isFrom) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: isFrom ? from : to,
+      firstDate: DateTime(now.year - 1),
+      lastDate: DateTime(now.year + 3),
+    );
+    if (picked != null) setState(() { if (isFrom) { from = picked; } else { to = picked; } });
+  }
+
+  Future<void> _submit() async {
+    if (to.isBefore(from)) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('End date must be after start date.')));
       return;
     }
-    final result = await api.get('/api/citizen/alerts');
-    if (mounted) setState(() { alerts = result['alerts'] as List<dynamic>; message = alerts.isEmpty ? 'No active emergency alerts.' : 'Emergency information requires your attention.'; });
-  }
-
-  Future<void> verifyWithWallet() async {
-    // Mocked EUDI Wallet round-trip: hand off to the wallet screen, and only
-    // continue (open the session) once the user "approves" in the wallet.
+    if (phone.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enter a mobile phone number.')));
+      return;
+    }
     final approved = await Navigator.of(context).push<bool>(
       MaterialPageRoute(builder: (_) => const WalletMockScreen()),
     );
-    if (approved == true) await start();
+    if (approved != true || !mounted) return;
+    Navigator.pop(context, Trip(
+      countryCode: destination['code']!, countryName: destination['name']!,
+      region: destination['region']!, phone: phone.text.trim(), from: from, to: to,
+    ));
   }
 
-  Future<void> action(int id, String action) async {
-    if (useMockData) {
-      setState(() => message = action == 'safe' ? 'Thank you — you are marked safe.' : 'Alert acknowledged.');
-      return;
-    }
-    await api.post('/api/citizen/alerts/$id/$action');
-    await refresh();
-  }
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: const Text('Inform your government')),
+    body: Padding(padding: const EdgeInsets.all(20), child: ListView(children: [
+      const Text('Where are you going?', style: TextStyle(fontWeight: FontWeight.bold)),
+      const SizedBox(height: 8),
+      DropdownButtonFormField<Map<String, String>>(
+        initialValue: destination,
+        decoration: const InputDecoration(border: OutlineInputBorder()),
+        items: destinations.map((d) => DropdownMenuItem(value: d, child: Text('${d['name']} · ${d['region']}'))).toList(),
+        onChanged: (v) => setState(() => destination = v ?? destination),
+      ),
+      const SizedBox(height: 18),
+      const Text('For how long?', style: TextStyle(fontWeight: FontWeight.bold)),
+      const SizedBox(height: 8),
+      Row(children: [
+        Expanded(child: OutlinedButton(onPressed: () => _pick(true), child: Text('From: ${_fmt(from)}'))),
+        const SizedBox(width: 10),
+        Expanded(child: OutlinedButton(onPressed: () => _pick(false), child: Text('To: ${_fmt(to)}'))),
+      ]),
+      const SizedBox(height: 18),
+      const Text('Mobile phone number', style: TextStyle(fontWeight: FontWeight.bold)),
+      const SizedBox(height: 8),
+      TextField(controller: phone, keyboardType: TextInputType.phone,
+        decoration: const InputDecoration(border: OutlineInputBorder(), prefixIcon: Icon(Icons.phone))),
+      const SizedBox(height: 24),
+      FilledButton.icon(onPressed: _submit, icon: const Icon(Icons.verified_user),
+        style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+        label: const Text('Sign with EU ID Wallet & inform')),
+      const SizedBox(height: 8),
+      const Text('You sign this notification with your wallet. Only nationality, name and your '
+          'chosen dates + phone are shared.', style: TextStyle(color: Colors.black54, fontSize: 13)),
+    ])),
+  );
+}
 
-  Future<void> shareLocation(int id) async {
+// --- Alert detail -----------------------------------------------------------
+class AlertDetailScreen extends StatefulWidget {
+  const AlertDetailScreen({super.key});
+  @override State<AlertDetailScreen> createState() => _AlertDetailScreenState();
+}
+
+class _AlertDetailScreenState extends State<AlertDetailScreen> {
+  String? note;
+
+  Future<void> _shareLocation() async {
     try {
       final permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) throw Exception('Location permission was not granted');
-      final position = await Geolocator.getCurrentPosition();
-      if (!useMockData) {
-        await api.post('/api/citizen/alerts/$id/location-consent');
-        await api.post('/api/citizen/alerts/$id/location-checkins', {
-          'latitude': position.latitude, 'longitude': position.longitude,
-          'accuracy_meters': position.accuracy, 'captured_at': DateTime.now().toUtc().toIso8601String(),
-        });
+      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+        throw Exception('Location permission was not granted');
       }
-      setState(() => message = 'Location shared (${position.latitude.toStringAsFixed(3)}, ${position.longitude.toStringAsFixed(3)}). Next check-in available tomorrow.');
-    } catch (error) {
-      setState(() => message = 'Could not share location: $error');
+      final p = await Geolocator.getCurrentPosition();
+      setState(() => note = 'Location shared (${p.latitude.toStringAsFixed(3)}, ${p.longitude.toStringAsFixed(3)}).');
+    } catch (e) {
+      setState(() => note = 'Could not share location: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(leading: Padding(padding: const EdgeInsets.all(8), child: Image.asset('assets/logo.png')), title: const Text('EU Data Compass'), actions: [IconButton(onPressed: api.token == null ? null : refresh, icon: const Icon(Icons.refresh))]),
-    body: Padding(padding: const EdgeInsets.all(20), child: loading ? const Center(child: CircularProgressIndicator()) : ListView(children: [
-      const Text('Emergency mode', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
-      const SizedBox(height: 8),
-      Text(message, style: const TextStyle(fontSize: 17)),
+    appBar: AppBar(title: const Text('Emergency instructions')),
+    body: Padding(padding: const EdgeInsets.all(20), child: ListView(children: [
+      Text(_alert['title'] as String, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+      Text(_alert['source'] as String, style: const TextStyle(color: Colors.black54)),
+      const SizedBox(height: 12),
+      Text(_alert['body'] as String, style: const TextStyle(fontSize: 16)),
       const SizedBox(height: 20),
-      if (api.token == null) FilledButton.icon(onPressed: verifyWithWallet, icon: const Icon(Icons.verified_user), label: const Text('Verify with EU ID Wallet')),
-      ...alerts.map((raw) { final alert = raw as Map<String, dynamic>; final id = alert['id'] as int; return Card(color: Colors.red.shade50, child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(alert['severity'].toString().toUpperCase(), style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
-        Text(alert['title'].toString(), style: const TextStyle(fontSize: 21, fontWeight: FontWeight.bold)),
-        Text(alert['body'].toString()), const SizedBox(height: 8), Text('Instructions: ${alert['instructions']}'),
-        const SizedBox(height: 12), Wrap(spacing: 8, children: [OutlinedButton(onPressed: () => action(id, 'acknowledge'), child: const Text('Acknowledge')), OutlinedButton(onPressed: () => action(id, 'safe'), child: const Text('I am safe')), FilledButton(onPressed: () => shareLocation(id), child: const Text('Share location once'))]),
-        const SizedBox(height: 6), Text('Source: ${alert['source_url']}'), Text('Satellite status: ${alert['satellite_status']}'),
-      ]))); }),
+      const Text('What to do now (Portuguese citizens)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+      const SizedBox(height: 8),
+      ..._ptInstructions.map((s) => Padding(padding: const EdgeInsets.only(bottom: 6),
+        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('•  '), Expanded(child: Text(s, style: const TextStyle(fontSize: 16)))]))),
+      const SizedBox(height: 16),
+      Card(color: Colors.blue.shade50, child: Padding(padding: const EdgeInsets.all(16),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(children: const [Icon(Icons.place, color: Color(0xff174ea6)), SizedBox(width: 6),
+            Expanded(child: Text('Collection point after the flood', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)))]),
+          const SizedBox(height: 8),
+          Text(_collectionPoint['name'] as String, style: const TextStyle(fontWeight: FontWeight.w600)),
+          Text(_collectionPoint['address'] as String),
+          Text('Coordinates: ${_collectionPoint['lat']}, ${_collectionPoint['lon']}', style: const TextStyle(color: Colors.black54)),
+          const SizedBox(height: 8),
+          Text(_collectionPoint['note'] as String),
+        ]))),
+      const SizedBox(height: 16),
+      Wrap(spacing: 8, children: [
+        OutlinedButton(onPressed: () => setState(() => note = 'Thank you — you are marked safe.'), child: const Text('I am safe')),
+        FilledButton(onPressed: _shareLocation, child: const Text('Share location once')),
+      ]),
+      if (note != null) Padding(padding: const EdgeInsets.only(top: 12), child: Text(note!, style: const TextStyle(fontWeight: FontWeight.w600))),
     ])),
   );
 }
 
+// --- Mocked EU Digital Identity Wallet screen -------------------------------
 class WalletMockScreen extends StatefulWidget {
   const WalletMockScreen({super.key});
   @override State<WalletMockScreen> createState() => _WalletMockScreenState();
