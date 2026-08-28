@@ -8,13 +8,18 @@ const apiBaseUrl = String.fromEnvironment('API_BASE_URL', defaultValue: 'http://
 class ApiClient {
   String? token;
   Map<String, String> get headers => {'Content-Type': 'application/json', if (token != null) 'Authorization': 'Bearer $token'};
+  static const _timeout = Duration(seconds: 10);
   Future<Map<String, dynamic>> post(String path, [Map<String, dynamic>? body]) async {
-    final response = await http.post(Uri.parse('$apiBaseUrl$path'), headers: headers, body: jsonEncode(body ?? {}));
+    final response = await http
+        .post(Uri.parse('$apiBaseUrl$path'), headers: headers, body: jsonEncode(body ?? {}))
+        .timeout(_timeout, onTimeout: () => throw Exception('Timed out reaching $apiBaseUrl. Is the backend running?'));
     if (response.statusCode >= 400) throw Exception(response.body);
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
   Future<Map<String, dynamic>> get(String path) async {
-    final response = await http.get(Uri.parse('$apiBaseUrl$path'), headers: headers);
+    final response = await http
+        .get(Uri.parse('$apiBaseUrl$path'), headers: headers)
+        .timeout(_timeout, onTimeout: () => throw Exception('Timed out reaching $apiBaseUrl. Is the backend running?'));
     if (response.statusCode >= 400) throw Exception(response.body);
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
