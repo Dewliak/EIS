@@ -70,27 +70,22 @@ Future<void> _initNotifications() async {
   } catch (_) {/* notifications unavailable (e.g. tests) — the in-app timer still works */}
 }
 
-// Schedule a notification `seconds` from now. Tries an exact alarm first (fires
-// on time even in Doze); if the OS refuses exact alarms, falls back to inexact
-// so something still arrives rather than nothing.
-Future<void> _schedule(int id, String title, String body, int seconds) async {
+// Post a notification immediately from the running app. More reliable across
+// OEMs (incl. Samsung One UI) than background AlarmManager delivery. The app is
+// alive whenever our in-app timer fires, so we post from there.
+Future<void> _showNow(int id, String title, String body) async {
   try {
-    final when = tz.TZDateTime.now(tz.local).add(Duration(seconds: seconds));
-    const details = NotificationDetails(android: AndroidNotificationDetails(
-      _channelId, 'Emergency alerts', importance: Importance.max, priority: Priority.high));
-    for (final mode in [AndroidScheduleMode.exactAllowWhileIdle, AndroidScheduleMode.inexactAllowWhileIdle]) {
-      try {
-        await _fln.zonedSchedule(id, title, body, when, details,
-          androidScheduleMode: mode,
-          uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime);
-        return; // scheduled
-      } catch (_) {/* try the next mode */}
-    }
-  } catch (_) {/* tz not initialised (e.g. tests) — the in-app timer still fires */}
+    final details = NotificationDetails(android: AndroidNotificationDetails(
+      _channelId, 'Emergency alerts',
+      importance: Importance.max, priority: Priority.high,
+      icon: '@mipmap/ic_launcher',
+      ticker: title,
+      styleInformation: BigTextStyleInformation(body, contentTitle: title)));
+    await _fln.show(id, title, body, details);
+  } catch (_) {/* no plugin (tests) */}
 }
 
-Future<void> _scheduleEmergencyNotification() =>
-    _schedule(1, _alert['title'] as String, 'Tap to open EU Compass for emergency instructions.', emergencyDelaySeconds);
+Future<void> _scheduleEmergencyNotification() async {/* no-op: posted on timer fire */}
 
 Future<void> _cancelEmergencyNotification() async {
   try { await _fln.cancel(1); } catch (_) {}
@@ -108,9 +103,6 @@ Future<bool> _ensureNotificationPermissions() async {
   } catch (_) { return false; }
 }
 
-// Fire a quick test notification (~5s) so the user can verify delivery works.
-Future<void> _showTestNotification() =>
-    _schedule(2, 'Test alert · EU Compass', 'If you can see this, notifications are working.', 5);
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -238,7 +230,13 @@ class _HomeScreenState extends State<HomeScreen> {
       await _scheduleEmergencyNotification();
       _timer = Timer(const Duration(seconds: emergencyDelaySeconds), () {
         _timer = null;
-        if (mounted && affectedTrips.isNotEmpty) setState(() => emergencyActive = true);
+        if (mounted && affectedTrips.isNotEmpty) {
+          setState(() => emergencyActive = true);
+          _showNow(1, '⚠ ${_alert['title']}',
+            'Flooding risk in central Berlin. Seek higher ground now, avoid flood water, '
+            'and call 112 in immediate danger. Tap to open EU Compass for full instructions '
+            'and your nearest Portuguese collection point.');
+        }
       });
     }
   }
@@ -302,16 +300,6 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 8),
             OutlinedButton.icon(onPressed: () => _inform(),
               icon: const Icon(Icons.add), label: const Text('Add another trip')),
-            TextButton.icon(
-              icon: const Icon(Icons.notifications_active),
-              label: const Text('Send a test alert (~5s)'),
-              onPressed: () async {
-                final messenger = ScaffoldMessenger.of(context);
-                await _showTestNotification();
-                messenger.showSnackBar(const SnackBar(
-                  content: Text('Test alert scheduled — leave the app to see it in ~5s.')));
-              },
-            ),
           ],
         ]),
       ),
