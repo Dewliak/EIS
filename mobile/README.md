@@ -1,4 +1,4 @@
-# EU Data Compass mobile clients
+# EU Compass mobile clients
 
 These Android-first Flutter clients implement the emergency-mode demo: travel registration, authority review/publication, alerts, acknowledgement, and consent-based location check-ins. The wallet step is a simulated EU Digital Identity Wallet screen.
 

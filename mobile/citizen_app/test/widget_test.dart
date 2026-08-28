@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -34,6 +35,16 @@ void main() {
     await tester.pump(const Duration(seconds: emergencyDelaySeconds + 1));
     await tester.pumpAndSettle();
     expect(find.text('Flood warning · Berlin'), findsOneWidget);
+
+    // Open the alert; 'I am safe' should change state, not stay a button.
+    await tester.tap(find.text('View instructions'));
+    await tester.pumpAndSettle();
+    expect(find.text('Emergency instructions'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('I am safe'), 300, scrollable: find.byType(Scrollable).last);
+    await tester.tap(find.text('I am safe'));
+    await tester.pumpAndSettle();
+    expect(find.text('You reported yourself safe'), findsOneWidget);
+    expect(find.text('I am safe'), findsNothing);
   });
 
   testWidgets('multiple trips: add a second, delete one via hold menu', (WidgetTester tester) async {

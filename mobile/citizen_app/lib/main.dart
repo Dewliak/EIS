@@ -15,6 +15,17 @@ final GlobalKey<NavigatorState> _navKey = GlobalKey<NavigatorState>();
 // Flipped when the user taps the OS notification; HomeScreen listens.
 final ValueNotifier<bool> _notificationTapped = ValueNotifier(false);
 
+// Emergency response state, shared between the alert screen and the home screen.
+final ValueNotifier<bool> _safeReported = ValueNotifier(false);
+final ValueNotifier<bool> _locationShared = ValueNotifier(false);
+String? _sharedLocationText;
+
+void _resetEmergencyResponse() {
+  _safeReported.value = false;
+  _locationShared.value = false;
+  _sharedLocationText = null;
+}
+
 // --- Mock emergency content (personalised for Portuguese travellers) --------
 const _alert = {
   'severity': 'severe',
@@ -61,7 +72,7 @@ Future<void> _scheduleEmergencyNotification() async {
     final when = tz.TZDateTime.now(tz.local).add(const Duration(seconds: emergencyDelaySeconds));
     await _fln.zonedSchedule(
       1, _alert['title'] as String,
-      'Tap to open EU Data Compass for emergency instructions.',
+      'Tap to open EU Compass for emergency instructions.',
       when,
       const NotificationDetails(android: AndroidNotificationDetails(
         _channelId, 'Emergency alerts',
@@ -101,7 +112,7 @@ class CitizenApp extends StatelessWidget {
   const CitizenApp({super.key});
   @override
   Widget build(BuildContext context) => MaterialApp(
-    title: 'EU Data Compass',
+    title: 'EU Compass',
     navigatorKey: _navKey,
     theme: ThemeData(colorSchemeSeed: const Color(0xff174ea6), useMaterial3: true),
     home: const HomeScreen(),
@@ -123,15 +134,21 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Trip> get affectedTrips =>
       trips.where((t) => t.guarded && t.region == 'Berlin').toList();
 
+  void _refresh() { if (mounted) setState(() {}); }
+
   @override
   void initState() {
     super.initState();
     _notificationTapped.addListener(_onNotificationTapped);
+    _safeReported.addListener(_refresh);
+    _locationShared.addListener(_refresh);
   }
 
   @override
   void dispose() {
     _notificationTapped.removeListener(_onNotificationTapped);
+    _safeReported.removeListener(_refresh);
+    _locationShared.removeListener(_refresh);
     _timer?.cancel();
     super.dispose();
   }
@@ -184,10 +201,12 @@ class _HomeScreenState extends State<HomeScreen> {
     if (affectedTrips.isEmpty) {
       _timer?.cancel(); _timer = null;
       await _cancelEmergencyNotification();
+      _resetEmergencyResponse();
       if (mounted) setState(() => emergencyActive = false);
       return;
     }
     if (!emergencyActive && _timer == null) {
+      _resetEmergencyResponse();
       await _scheduleEmergencyNotification();
       _timer = Timer(const Duration(seconds: emergencyDelaySeconds), () {
         _timer = null;
@@ -215,7 +234,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: Padding(padding: const EdgeInsets.all(8), child: Image.asset('assets/logo.png')),
-        title: const Text('EU Data Compass'),
+        title: const Text('EU Compass'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(20),
@@ -291,6 +310,13 @@ class _HomeScreenState extends State<HomeScreen> {
         Text(_alert['body'] as String),
         const SizedBox(height: 6),
         Text('Affects: $where', style: const TextStyle(fontStyle: FontStyle.italic)),
+        if (_safeReported.value || _locationShared.value) Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Wrap(spacing: 6, children: [
+            if (_safeReported.value) Chip(avatar: const Icon(Icons.check_circle, color: Colors.green, size: 18), label: const Text('You reported safe')),
+            if (_locationShared.value) const Chip(avatar: Icon(Icons.my_location, size: 18), label: Text('Location shared')),
+          ]),
+        ),
         const SizedBox(height: 12),
         FilledButton.icon(onPressed: _openAlert, icon: const Icon(Icons.menu_book), label: const Text('View instructions')),
       ])),
@@ -439,18 +465,21 @@ class AlertDetailScreen extends StatefulWidget {
 }
 
 class _AlertDetailScreenState extends State<AlertDetailScreen> {
-  String? note;
+  String? error;
 
   Future<void> _shareLocation() async {
+    setState(() => error = null);
     try {
       final permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
         throw Exception('Location permission was not granted');
       }
       final p = await Geolocator.getCurrentPosition();
-      setState(() => note = 'Location shared (${p.latitude.toStringAsFixed(3)}, ${p.longitude.toStringAsFixed(3)}).');
+      _sharedLocationText = '${p.latitude.toStringAsFixed(4)}, ${p.longitude.toStringAsFixed(4)}';
+      _locationShared.value = true;
+      if (mounted) setState(() {});
     } catch (e) {
-      setState(() => note = 'Could not share location: $e');
+      setState(() => error = 'Could not share location: $e');
     }
   }
 
@@ -481,11 +510,40 @@ class _AlertDetailScreenState extends State<AlertDetailScreen> {
           Text(_collectionPoint['note'] as String),
         ]))),
       const SizedBox(height: 16),
-      Wrap(spacing: 8, children: [
-        OutlinedButton(onPressed: () => setState(() => note = 'Thank you — you are marked safe.'), child: const Text('I am safe')),
-        FilledButton(onPressed: _shareLocation, child: const Text('Share location once')),
-      ]),
-      if (note != null) Padding(padding: const EdgeInsets.only(top: 12), child: Text(note!, style: const TextStyle(fontWeight: FontWeight.w600))),
+      const Text('Your response', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+      const SizedBox(height: 8),
+      // Safe status — changes state instead of leaving you on the same screen.
+      if (_safeReported.value)
+        Card(color: Colors.green.shade50, child: ListTile(
+          leading: Icon(Icons.check_circle, color: Colors.green.shade700),
+          title: const Text('You reported yourself safe', style: TextStyle(fontWeight: FontWeight.w600)),
+          subtitle: const Text('Your government has been notified (simulated).'),
+          trailing: TextButton(onPressed: () { _safeReported.value = false; setState(() {}); }, child: const Text('Undo')),
+        ))
+      else
+        FilledButton.icon(
+          icon: const Icon(Icons.verified),
+          style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(50)),
+          onPressed: () { _safeReported.value = true; setState(() {}); },
+          label: const Text('I am safe'),
+        ),
+      const SizedBox(height: 10),
+      // Location status.
+      if (_locationShared.value)
+        Card(color: Colors.blue.shade50, child: ListTile(
+          leading: const Icon(Icons.my_location, color: Color(0xff174ea6)),
+          title: const Text('Location shared', style: TextStyle(fontWeight: FontWeight.w600)),
+          subtitle: Text(_sharedLocationText == null ? 'Shared with responders.' : 'At $_sharedLocationText · shared with responders.'),
+          trailing: TextButton(onPressed: () { _locationShared.value = false; _sharedLocationText = null; setState(() {}); }, child: const Text('Stop')),
+        ))
+      else
+        OutlinedButton.icon(
+          icon: const Icon(Icons.share_location),
+          style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(50)),
+          onPressed: _shareLocation,
+          label: const Text('Share my location once'),
+        ),
+      if (error != null) Padding(padding: const EdgeInsets.only(top: 12), child: Text(error!, style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.w600))),
     ])),
   );
 }
@@ -518,7 +576,7 @@ class _WalletMockScreenState extends State<WalletMockScreen> {
         const Text('Simulated — demo verification only', textAlign: TextAlign.center, style: TextStyle(color: Colors.white70)),
         const SizedBox(height: 28),
         const Card(child: Padding(padding: EdgeInsets.all(18), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('EU Data Compass is requesting:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          Text('EU Compass is requesting:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           SizedBox(height: 10),
           ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.flag), title: Text('Nationality'), subtitle: Text('Portugal (PT)')),
           ListTile(contentPadding: EdgeInsets.zero, leading: Icon(Icons.person), title: Text('Name'), subtitle: Text('Demo Traveller')),
