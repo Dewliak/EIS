@@ -47,6 +47,7 @@ Future<void> _initNotifications() async {
     );
     final android = _fln.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
     await android?.requestNotificationsPermission();
+    await android?.requestExactAlarmsPermission();
     await android?.createNotificationChannel(const AndroidNotificationChannel(
       _channelId, 'Emergency alerts',
       description: 'Emergency alerts for your informed travel period',
@@ -66,7 +67,7 @@ Future<void> _scheduleEmergencyNotification() async {
         _channelId, 'Emergency alerts',
         importance: Importance.max, priority: Priority.high,
       )),
-      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
     );
   } catch (_) {/* no plugin (tests) */}
@@ -260,7 +261,6 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(width: 8),
             Expanded(child: Text(guarded ? 'Guarded' : 'Not active',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: guarded ? Colors.green.shade700 : Colors.grey.shade700))),
-            const Icon(Icons.more_horiz, color: Colors.black38),
           ]),
           const SizedBox(height: 6),
           Text('Destination: ${t.countryName} · ${t.region}'),
