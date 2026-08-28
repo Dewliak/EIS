@@ -7,8 +7,8 @@ picks a destination, an intent (traveling / moving), and a subject, then lands
 in the Deadlines · Documents · Information dashboard described in
 docs/00-PLATFORM-CONCEPT.md and docs/09-FULL-PLATFORM-SPEC.md.
 
-Real, sourced content exists for Germany (the focus) and Spain. The other seven
-destinations show rough/unverified matrix data, badged as such.
+Real, sourced content exists for Germany (the focus) and Spain. Other
+destinations show rough/unverified data where long-stay research is incomplete.
 
 Run:  streamlit run webapp/app.py
 """
@@ -52,6 +52,21 @@ st.markdown(
       .app-logo { width: 7rem; height: 7rem; object-fit: cover; border-radius: 50%; margin: .1rem 1rem .25rem 0; }
       .origin-badge { display: inline-flex; align-items: center; gap: .45rem; margin: .35rem 0 .7rem; padding: .5rem .8rem; border: 1px solid #b9cbea; border-radius: .5rem; background: #eaf1ff; color: #164194; font-size: .98rem; font-weight: 700; }
       .origin-badge-label { color: #52627a; font-size: .78rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+      .journey-panel { margin: .25rem 0 1.1rem; padding: 1rem 1.15rem; border: 1px solid #d9e3f1; border-radius: .65rem; background: #fff; box-shadow: 0 4px 14px rgba(23, 43, 77, .05); }
+      .journey-label { color: #52627a; font-size: .76rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+      .journey-route { margin-top: .25rem; color: #172b4d; font-size: 1.25rem; font-weight: 750; }
+      .journey-route strong { color: #164194; }
+      .journey-progress { display: flex; flex-wrap: wrap; gap: .45rem; margin-top: .8rem; }
+      .journey-step { padding: .3rem .6rem; border-radius: 99px; background: #eef2f7; color: #52627a; font-size: .82rem; font-weight: 700; }
+      .journey-step.active { background: #eaf1ff; color: #164194; }
+      .plan-panel { margin: 1rem 0 1.25rem; padding: 1.1rem 1.2rem; border-left: 5px solid #164194; border-radius: .55rem; background: #eaf1ff; }
+      .plan-kicker { color: #164194; font-size: .76rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+      .plan-action { margin-top: .3rem; color: #172b4d; font-size: 1.18rem; font-weight: 750; }
+      .plan-meta { color: #52627a; font-size: .9rem; }
+      .status-badge { display: inline-block; margin-bottom: .5rem; padding: .28rem .55rem; border-radius: 99px; background: #edf7f1; color: #17623a; font-size: .78rem; font-weight: 800; }
+      .status-badge.draft { background: #fff5df; color: #795500; }
+      .document-required { color: #164194; font-size: .78rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+      .document-optional { color: #52627a; font-size: .78rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
       .stButton > button, .stSelectbox [data-baseweb="select"] { min-height: 2.9rem; font-size: 1rem; }
       .stButton > button { border-radius: .45rem; }
       [data-testid="stDataFrame"] { font-size: 1rem; }
@@ -180,6 +195,28 @@ def breadcrumb():
     st.divider()
 
 
+def journey_context():
+    """Keep the current citizen journey visible while preserving free navigation."""
+    destination = data.get_country(st.session_state.country) if st.session_state.country else None
+    destination_name = destination["name"] if destination else "Choose a destination"
+    steps = [
+        ("1", "Destination", st.session_state.country is not None),
+        ("2", "Purpose", st.session_state.intent is not None),
+        ("3", "Need", st.session_state.subject is not None),
+        ("4", "Your plan", st.session_state.subject is not None),
+    ]
+    progress = "".join(
+        f'<span class="journey-step {"active" if active else ""}">{number} {label}</span>'
+        for number, label, active in steps
+    )
+    st.markdown(
+        f'<div class="journey-panel"><div class="journey-label">Your EU mobility journey</div>'
+        f'<div class="journey-route"><strong>{data.ORIGIN["name"]}</strong> → {destination_name}</div>'
+        f'<div class="journey-progress">{progress}</div></div>',
+        unsafe_allow_html=True,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Step 1 — destination picker
 # ---------------------------------------------------------------------------
@@ -200,7 +237,14 @@ def step_country():
         _reset("intent")
         st.rerun()
 
-    st.caption("Germany and Spain have verified content. Other destinations currently use universal short-stay or draft data.")
+    if selected:
+        country = data.get_country(selected)
+        if country["verified"]:
+            st.success(f"Verified destination guidance is available for {country['name']}.")
+        else:
+            st.info(f"{country['name']} has universal short-stay guidance; some long-stay information is still draft.")
+    else:
+        st.caption("Germany and Spain have verified content. Other destinations currently use universal short-stay or draft data.")
 
 
 # ---------------------------------------------------------------------------
@@ -216,6 +260,7 @@ def step_intent():
             with st.container(border=True):
                 st.markdown(f"### {i['name']}")
                 st.write(i["sub"])
+                st.caption("Choose this if you are visiting temporarily." if i["id"] == "traveling" else "Choose this if the destination will become your residence.")
                 if st.button(f"Choose {i['name']}", key=f"intent_{i['id']}", use_container_width=True):
                     st.session_state.intent = i["id"]
                     _reset("subject")
@@ -228,16 +273,18 @@ def step_intent():
 
 def step_subject():
     st.subheader("What do you need help with?")
-    st.caption("Only **Residence & Registration** is live in this MVP. Other subjects are planned.")
+    st.caption("Choose the area you want to explore.")
     cols = st.columns(4)
     for idx, s in enumerate(data.SUBJECTS):
         with cols[idx % 4]:
-            label = s["name"]
-            if st.button(label, key=f"subject_{s['id']}", use_container_width=True, disabled=not s["live"]):
-                st.session_state.subject = s["id"]
-                st.rerun()
-            if not s["live"]:
-                st.caption("coming soon")
+            with st.container(border=True):
+                if st.button(
+                    s["name"],
+                    key=f"subject_{s['id']}",
+                    use_container_width=True,
+                ):
+                    st.session_state.subject = s["id"]
+                    st.rerun()
 
 
 # ---------------------------------------------------------------------------
@@ -440,6 +487,47 @@ def wallet_document_action(doc):
         st.rerun()
 
 
+def plan_at_a_glance(country, intent, content):
+    """Show the most useful next step before the detailed dashboard tabs."""
+    first_deadline = content.get("deadlines", [{}])[0]
+    verification = "Verified content" if content.get("verified") else "Draft content — verify before relying on it"
+    verification_class = "" if content.get("verified") else " draft"
+    st.markdown(
+        f'<div class="plan-panel"><div class="plan-kicker">Your plan at a glance</div>'
+        f'<div class="plan-action">Next: {escape(str(first_deadline.get("action", "Review the guidance below.")))}</div>'
+        f'<div class="plan-meta">{country["name"]} · {"Traveling" if intent == "traveling" else "Moving in"} · '
+        f'<span class="status-badge{verification_class}">{verification}</span></div></div>',
+        unsafe_allow_html=True,
+    )
+
+
+def notification_data_info():
+    """Explain notification retention and collection in the prototype."""
+    notification = st.session_state.travel_notification
+    draft = st.session_state.inform_draft
+    retention = None
+    if notification:
+        retention = notification.get("retention_until")
+    elif draft:
+        retention = st.session_state.get("inform_retention_until")
+
+    st.markdown("#### Notification data & privacy")
+    st.write("This notification creates a temporary emergency contact record with the home-country registry.")
+    retention_value = retention.isoformat() if hasattr(retention, "isoformat") else retention
+    st.table({
+        "Data item": ["Travel destination and dates", "Phone number", "App push preference", "Precise location", "Retention"],
+        "How it is used": [
+            "Match you with relevant emergency information",
+            "Emergency SMS fallback, if enabled",
+            "Receive emergency app notifications, if enabled",
+            "Not collected by this web notification flow",
+            retention_value or "Selected during notification review; default is 30 days after travel ends",
+        ],
+    })
+    st.info("The prototype stores the notification in the browser session only. A production version would delete or anonymise the record when the retention period ends and would show the responsible authority and legal basis.")
+    st.caption("Location sharing is a separate, explicit emergency-only consent. It is never enabled by creating a travel notification.")
+
+
 def dashboard():
     c = data.get_country(st.session_state.country)
     intent = st.session_state.intent
@@ -456,10 +544,11 @@ def dashboard():
     else:
         st.success("Verified content — sourced from primary references (see the Information tab).")
 
+    plan_at_a_glance(c, intent, content)
     st.info(content["summary"])
     inform_with_id()
 
-    tab_dl, tab_docs, tab_info = st.tabs(["Deadlines", "Documents", "Information"])
+    tab_dl, tab_docs, tab_info, tab_privacy = st.tabs(["Deadlines", "Documents", "Information", "Data & privacy"])
 
     with tab_dl:
         st.markdown("#### The compliance clock")
@@ -469,7 +558,9 @@ def dashboard():
     with tab_docs:
         st.markdown("#### Documents & forms")
         for doc in content["documents"]:
-            with st.expander(doc["name"]):
+            optional = "optional" in doc["name"].lower()
+            badge = "OPTIONAL" if optional else "REQUIRED"
+            with st.expander(f"{badge} · {doc['name']}"):
                 st.write(doc["initial_info"])
                 meta = {
                     "Information shared": doc["shared"],
@@ -486,6 +577,8 @@ def dashboard():
                 with bcols[0]:
                     if doc["form_url"]:
                         st.markdown(f"[Open form / source]({doc['form_url']})")
+                    else:
+                        st.caption("Source link is listed in the Information tab.")
                 with bcols[1]:
                     st.button("Sign with wallet", key=f"sign_{doc['name']}", disabled=True,
                               help="Document signing arrives with the EUDI Wallet integration (~2027).",
@@ -501,6 +594,9 @@ def dashboard():
         for s in content["sources"]:
             st.markdown(f"- {s}")
 
+    with tab_privacy:
+        notification_data_info()
+
 
 # ---------------------------------------------------------------------------
 # Router
@@ -513,6 +609,7 @@ def main():
 
     header(user)
     breadcrumb()
+    journey_context()
 
     if st.session_state.country is None:
         step_country()

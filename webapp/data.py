@@ -54,7 +54,7 @@ COUNTRIES = [
     {"code": "SE", "name": "Sweden", "flag": "🇸🇪", "verified": False},
 ]
 
-# Subjects. Only "residence" is live for the MVP (per docs/00 MVP scope).
+# Categories currently available in the demo.
 SUBJECTS = [
     {"id": "residence", "name": "Residence & Registration", "icon": "🏠", "live": True},
     {"id": "work", "name": "Work", "icon": "💼", "live": False},
@@ -239,6 +239,247 @@ _DE_MOVING = {
         "Make it in Germany — https://www.make-it-in-germany.com/en/working-in-germany/information-eu-citizens",
         "Wohnungsgeberbestätigung form (Berlin) — assets/pdf/wohnungsgeberbestaetigung_berlin.pdf",
     ],
+}
+
+
+# ---------------------------------------------------------------------------
+# Germany — subject guides (the remaining categories in the demo).
+# These are practical orientation guides, not personalised legal advice.
+# ---------------------------------------------------------------------------
+
+_DE_SUBJECTS = {
+    "work": {
+        "verified": True,
+        "summary": (
+            "EU citizens have unrestricted access to employment in Germany and do not need a work "
+            "permit. Before or shortly after starting work, organise your address registration, "
+            "health insurance, tax information and payroll documents. Regulated professions may "
+            "need formal recognition of qualifications."
+        ),
+        "deadlines": [
+            {"trigger": "Before starting work", "action": "Check whether your profession is regulated and whether recognition is required", "window": "before start", "fine": "varies by profession"},
+            {"trigger": "Move-in", "action": "Register your address at the Bürgeramt", "window": "14 days", "fine": "up to €1,000"},
+            {"trigger": "Start of employment", "action": "Give your employer your tax and insurance details", "window": "before/as of start", "fine": "payroll delay possible"},
+            {"trigger": "After the tax year", "action": "Review whether an income-tax return is required or beneficial", "window": "annual", "fine": "case-dependent"},
+        ],
+        "documents": [
+            {"name": "Employment contract", "initial_info": "Written evidence of the job, pay, working hours and employer. EU citizens do not need a work permit, but should keep the contract for residence and payroll questions.", "shared": "Identity, employment, pay and work conditions", "to_whom": "Employer / authorities if requested", "retention": "Keep for employment and tax records", "reissuable": "Request a copy from employer", "submit_where": "Employer", "issuer": "Employer", "form_url": "https://www.make-it-in-germany.com/en/working-in-germany/information-eu-citizens"},
+            {"name": "Professional qualification recognition (if regulated)", "initial_info": "Recognition is mandatory for regulated professions such as many healthcare, teaching and legal professions. It is generally not required for EU citizens in non-regulated professions.", "shared": "Qualification, identity and professional history", "to_whom": "Competent German recognition authority", "retention": "Procedure record", "reissuable": "Decision can be requested again/reviewed as applicable", "submit_where": "Competent authority found through the Recognition Finder", "issuer": "Competent German authority", "form_url": "https://www.anerkennung-in-deutschland.de/html/en/"},
+            {"name": "Health insurance membership", "initial_info": "Employees are generally covered by statutory health insurance unless another lawful arrangement applies. Choose a Krankenkasse and give its details to your employer.", "shared": "Identity and employment", "to_whom": "Health insurer / employer", "retention": "Membership duration", "reissuable": "Yes", "submit_where": "Health insurer", "issuer": "Krankenkasse", "form_url": "https://gesund.bund.de/en/krankenversicherung"},
+            {"name": "Tax identification number (Steuer-ID)", "initial_info": "The personal tax identification number is assigned by the BZSt and remains valid for life. It is used for payroll and tax administration.", "shared": "Identity and tax record", "to_whom": "Employer / tax authorities", "retention": "Permanent identifier", "reissuable": "Re-notification possible", "submit_where": "Automatic after residence registration; contact BZSt if not received", "issuer": "BZSt", "form_url": "https://www.bzst.de/EN/Private_individuals/Tax_identification_number/tax_identification_number_node.html"},
+            {"name": "Rentenversicherungsnummer (social security number)", "initial_info": "The German insurance number links employment and pension records. The employer or health insurer normally initiates the registration when employment starts.", "shared": "Identity and employment", "to_whom": "Employer / social-insurance institutions", "retention": "Permanent identifier", "reissuable": "Replacement confirmation possible", "submit_where": "Through employer, health insurer or Deutsche Rentenversicherung", "issuer": "Deutsche Rentenversicherung", "form_url": "https://www.deutsche-rentenversicherung.de/SharedDocs/Glossareintraege/DE/S/sozialversicherungsnummer.html"},
+        ],
+        "info": [
+            ("Work permit", "Not required for EU citizens", "Federal Employment Agency"),
+            ("Address registration", "Within 14 days of moving in", "§17 Bundesmeldegesetz (BMG)"),
+            ("Regulated professions", "Recognition may be mandatory", "Federal Employment Agency / Recognition Finder"),
+            ("Health insurance", "Arrange cover before or at the start of employment", "gesund.bund.de"),
+            ("Tax ID", "Assigned by BZSt; remains valid for life", "BZSt"),
+        ],
+        "sources": [
+            "Federal Employment Agency — Working in Germany: https://www.arbeitsagentur.de/en/working-in-germany/what-you-need-to-do",
+            "Federal Employment Agency — Professional qualification recognition: https://www.arbeitsagentur.de/en/working-in-germany/professional-qualifications",
+            "Make it in Germany — EU citizens: https://www.make-it-in-germany.com/en/working-in-germany/information-eu-citizens",
+            "German health portal: https://gesund.bund.de/en/krankenversicherung",
+            "Deutsche Rentenversicherung — insurance number: https://www.deutsche-rentenversicherung.de/SharedDocs/Glossareintraege/DE/S/sozialversicherungsnummer.html",
+        ],
+    },
+    "studies": {
+        "verified": True,
+        "summary": (
+            "EU students do not need a visa or residence permit to study in Germany. You need a "
+            "place at a recognised institution, health insurance and sufficient resources for the "
+            "student residence conditions. University deadlines and admission requirements are set "
+            "by each institution."
+        ),
+        "deadlines": [
+            {"trigger": "Before application", "action": "Check admission requirements and application deadline", "window": "institution calendar", "fine": "missed intake"},
+            {"trigger": "Before enrolment", "action": "Arrange health insurance confirmation", "window": "before enrolment", "fine": "enrolment may be blocked"},
+            {"trigger": "Move-in", "action": "Register your address at the Bürgeramt", "window": "14 days", "fine": "up to €1,000"},
+            {"trigger": "Each semester", "action": "Re-enrol and pay the semester contribution", "window": "institution calendar", "fine": "loss of enrolment"},
+        ],
+        "documents": [
+            {"name": "Admission letter / enrolment confirmation", "initial_info": "Proof that a German university or recognised education provider accepted or enrolled you. Check the institution’s own requirements and deadlines.", "shared": "Identity, education history and admission data", "to_whom": "University / student administration", "retention": "Study record duration", "reissuable": "Request from institution", "submit_where": "University application or enrolment portal", "issuer": "University / education provider", "form_url": "https://www.daad.de/en/studying-in-germany/universities/"},
+            {"name": "Recognised university entrance qualification", "initial_info": "Your Portuguese school-leaving or prior degree documents may need an eligibility check, translation or certified copy depending on the institution and programme.", "shared": "Education history and qualifications", "to_whom": "University / admission service", "retention": "Application record", "reissuable": "Request replacement from issuing institution", "submit_where": "University or application service", "issuer": "Portuguese school/university", "form_url": "https://www.daad.de/en/studying-in-germany/requirements/admission-requirements/"},
+            {"name": "Student health insurance confirmation", "initial_info": "Health insurance is required for students in Germany. The correct route depends on your status and existing cover; confirm it with the insurer and university before enrolment.", "shared": "Identity and insurance status", "to_whom": "University / health insurer", "retention": "Membership duration", "reissuable": "Yes", "submit_where": "Health insurer and university", "issuer": "Krankenkasse / recognised insurer", "form_url": "https://gesund.bund.de/en/krankenversicherung"},
+            {"name": "Proof of sufficient resources", "initial_info": "Keep evidence that you can support yourself during study. The specific evidence and amount can depend on the authority and your situation.", "shared": "Financial information", "to_whom": "Authority if requested", "retention": "Keep for residence questions", "reissuable": "Updated evidence can be provided", "submit_where": "Keep available; submit only when required", "issuer": "Bank / sponsor / scholarship provider", "form_url": "https://www.make-it-in-germany.com/en/studying-in-germany"},
+            {"name": "Anmeldung → Meldebescheinigung", "initial_info": "Address registration creates the proof of address commonly needed for banking, university administration and other services.", "shared": "Identity, nationality, address and move-in date", "to_whom": "Bürgeramt / university / service providers", "retention": "Municipal register", "reissuable": "Yes", "submit_where": "Local Bürgeramt", "issuer": "Bürgeramt", "form_url": "https://service.berlin.de/dienstleistung/120686/en/"},
+        ],
+        "info": [
+            ("Visa / residence permit", "Not required for EU students", "Make it in Germany"),
+            ("Admission", "Requirements and deadlines are set by each institution", "DAAD"),
+            ("Health insurance", "Required before enrolment", "gesund.bund.de"),
+            ("Address registration", "Within 14 days of moving in", "§17 BMG"),
+            ("Work while studying", "EU citizens have free access to the labour market", "Federal Employment Agency"),
+        ],
+        "sources": [
+            "Make it in Germany — Studying: https://www.make-it-in-germany.com/en/studying-in-germany",
+            "DAAD — Universities and admission: https://www.daad.de/en/studying-in-germany/universities/",
+            "DAAD — Admission requirements: https://www.daad.de/en/studying-in-germany/requirements/admission-requirements/",
+            "German health portal: https://gesund.bund.de/en/krankenversicherung",
+        ],
+    },
+    "tax": {
+        "verified": True,
+        "summary": (
+            "Germany uses a personal tax identification number (Steuer-ID) for individuals. After "
+            "address registration, the BZSt normally sends it automatically. Your tax position also "
+            "depends on residence, income source, employment and any Portugal–Germany tax treaty "
+            "question, so cross-border situations may need professional advice."
+        ),
+        "deadlines": [
+            {"trigger": "After Anmeldung", "action": "Wait for the Steuer-ID letter from BZSt", "window": "automatic; allow postal processing", "fine": "contact BZSt if missing"},
+            {"trigger": "Start work", "action": "Give the employer your Steuer-ID and tax details", "window": "before/as of payroll", "fine": "payroll issue possible"},
+            {"trigger": "End of tax year", "action": "Check whether an income-tax return is mandatory or useful", "window": "annual", "fine": "case-dependent"},
+            {"trigger": "Cross-border income", "action": "Check tax-residency and treaty consequences", "window": "before filing", "fine": "case-dependent"},
+        ],
+        "documents": [
+            {"name": "Steuer-ID (personal tax identification number)", "initial_info": "An 11-digit identifier assigned by the Federal Central Tax Office to individuals liable for tax. It normally arrives after residence registration and remains valid for life.", "shared": "Identity and tax identifier", "to_whom": "Employer, Finanzamt and other authorised tax processes", "retention": "Permanent identifier", "reissuable": "Re-notification possible", "submit_where": "Automatic after Anmeldung; request information from BZSt if needed", "issuer": "Bundeszentralamt für Steuern (BZSt)", "form_url": "https://www.bzst.de/EN/Private_individuals/Tax_identification_number/tax_identification_number_node.html"},
+            {"name": "Meldebescheinigung", "initial_info": "Proof of address registration, often needed when setting up tax, employment and financial services.", "shared": "Identity, address and registration date", "to_whom": "Employer / Finanzamt / service providers", "retention": "Keep while relevant for tax records", "reissuable": "Yes", "submit_where": "Issued by Bürgeramt", "issuer": "Bürgeramt", "form_url": "https://service.berlin.de/dienstleistung/120686/en/"},
+            {"name": "Income and employment records", "initial_info": "Keep payslips, annual wage-tax statement and records of deductible expenses for your own tax administration and any return.", "shared": "Income, employment and expenses", "to_whom": "Finanzamt if required", "retention": "Keep according to applicable tax-record rules", "reissuable": "Copies may be requested from employer", "submit_where": "Keep securely; submit through ELSTER or Finanzamt when required", "issuer": "Employer / taxpayer", "form_url": "https://www.elster.de/eportal/start"},
+            {"name": "Income-tax return (if required or chosen)", "initial_info": "Some taxpayers must file; others may file voluntarily. Use ELSTER or obtain appropriate tax advice, especially for cross-border income.", "shared": "Income, deductions and tax circumstances", "to_whom": "Finanzamt", "retention": "Tax administration record", "reissuable": "Amendment or copy subject to tax procedure", "submit_where": "ELSTER / Finanzamt", "issuer": "Taxpayer", "form_url": "https://www.elster.de/eportal/start"},
+        ],
+        "info": [
+            ("Steuer-ID", "Assigned by BZSt and valid for life", "BZSt"),
+            ("Steuer-ID vs Steuernummer", "Personal identifier differs from a tax-office number used in some filings/business contexts", "BZSt / Finanzamt"),
+            ("Tax return", "Mandatory or voluntary depending on circumstances", "ELSTER / Finanzamt"),
+            ("Cross-border income", "Assess residence, income source and treaty rules", "Finanzamt / professional adviser"),
+        ],
+        "sources": [
+            "BZSt — Tax identification number: https://www.bzst.de/EN/Private_individuals/Tax_identification_number/tax_identification_number_node.html",
+            "ELSTER — German electronic tax return: https://www.elster.de/eportal/start",
+            "Make it in Germany — Salary, taxes and social security: https://www.make-it-in-germany.com/en/working-in-germany/working-environment/salary-taxes-social-security/print",
+        ],
+    },
+    "health": {
+        "verified": True,
+        "summary": (
+            "People residing in Germany must have health insurance. Most employees and many students "
+            "use statutory health insurance (GKV); private insurance (PKV) is available only under "
+            "specific conditions. EHIC is designed for necessary healthcare during a temporary stay "
+            "and is not a general replacement for arranging cover after moving."
+        ),
+        "deadlines": [
+            {"trigger": "Before or at arrival", "action": "Confirm which health-insurance route covers your situation", "window": "before residence begins", "fine": "coverage gap risk"},
+            {"trigger": "Start work or study", "action": "Send insurance confirmation to employer or institution", "window": "before/as of start", "fine": "registration delay possible"},
+            {"trigger": "Change of status", "action": "Tell the insurer when employment, study or residence circumstances change", "window": "promptly", "fine": "contribution/coverage issue"},
+        ],
+        "documents": [
+            {"name": "Health insurance membership confirmation", "initial_info": "Proof of statutory or private cover. The correct insurer and contribution route depend on employment, study, self-employment and other circumstances.", "shared": "Identity, insurance and status information", "to_whom": "Employer, university or authority when required", "retention": "Membership duration and legal record period", "reissuable": "Yes", "submit_where": "Health insurer", "issuer": "Krankenkasse / private insurer", "form_url": "https://gesund.bund.de/en/krankenversicherung"},
+            {"name": "European Health Insurance Card (EHIC) for temporary stays", "initial_info": "Useful for medically necessary state healthcare during a temporary stay while insured in Portugal. It does not by itself replace German cover for a person who has moved residence.", "shared": "Insurance entitlement and identity", "to_whom": "Doctor / hospital", "retention": "Card validity period", "reissuable": "Yes", "submit_where": "Portuguese health insurer", "issuer": "Portuguese health insurer", "form_url": "https://ehic.europa.eu/"},
+            {"name": "Health insurance number / electronic health card", "initial_info": "Your insurer provides the membership details or health card used to access covered care. Keep the card and insurer contact details available.", "shared": "Identity and insurance membership", "to_whom": "Doctors, hospitals and insurer", "retention": "Membership duration", "reissuable": "Yes", "submit_where": "Issued by insurer", "issuer": "Krankenkasse / private insurer", "form_url": "https://gesund.bund.de/en/krankenversicherung"},
+            {"name": "Proof of family co-insurance (if applicable)", "initial_info": "Some family members may be covered through statutory family insurance if the legal conditions are met. Confirm eligibility with the insurer.", "shared": "Family relationship, identity and status", "to_whom": "Health insurer", "retention": "Coverage period", "reissuable": "Yes", "submit_where": "Health insurer", "issuer": "Krankenkasse", "form_url": "https://www.bundesgesundheitsministerium.de/familienversicherung.html"},
+        ],
+        "info": [
+            ("Insurance requirement", "Everyone residing in Germany must have health insurance", "gesund.bund.de"),
+            ("Main systems", "Statutory (GKV) and private (PKV)", "Federal Ministry of Health"),
+            ("EHIC", "Temporary-stay healthcare entitlement; not a general relocation solution", "Bundesportal / EHIC"),
+            ("Family insurance", "Possible for eligible family members under statutory insurance", "Federal Ministry of Health"),
+        ],
+        "sources": [
+            "German health portal — Health insurance: https://gesund.bund.de/en/krankenversicherung",
+            "Federal Office for Migration and Refugees — German healthcare system: https://www.migration-gesundheit.bund.de/en/health-care-system/the-german-health-care-system",
+            "Bundesportal — EHIC in Germany: https://verwaltung.bund.de/leistungsverzeichnis/EN/rechte-und-pflichten/102837937",
+        ],
+    },
+    "social_security": {
+        "verified": True,
+        "summary": (
+            "Employees in Germany are generally covered by social insurance, which includes pension, "
+            "health, long-term care, unemployment and accident protection. The employer normally "
+            "handles registration and payroll deductions. The German insurance number is a permanent "
+            "identifier and should be kept for future employment and pension questions."
+        ),
+        "deadlines": [
+            {"trigger": "Start employment", "action": "Employer registers you with the relevant social-insurance system", "window": "at start of employment", "fine": "employer responsibility"},
+            {"trigger": "First employment", "action": "Receive or retrieve your Versicherungsnummer", "window": "after registration", "fine": "contact insurer/DRV if missing"},
+            {"trigger": "Every payslip", "action": "Check social-insurance deductions and employer details", "window": "each payroll cycle", "fine": "raise discrepancies promptly"},
+            {"trigger": "Job change", "action": "Give the same insurance number to the new employer", "window": "at change", "fine": "administrative delay"},
+        ],
+        "documents": [
+            {"name": "Versicherungsnummernachweis (social security number notice)", "initial_info": "Confirms the pension-insurance number. Since 2023, employers normally retrieve the number electronically; a paper notice may still be requested or issued.", "shared": "Name, date of birth and insurance number", "to_whom": "Employer / social-insurance institutions", "retention": "Permanent identifier", "reissuable": "Replacement confirmation possible", "submit_where": "Employer, health insurer or Deutsche Rentenversicherung", "issuer": "Deutsche Rentenversicherung", "form_url": "https://www.deutsche-rentenversicherung.de/DRV/DE/Rente/Allgemeine-Informationen/Sozialversicherungsausweis/Sozialversicherungsausweis.html"},
+            {"name": "Employment registration record", "initial_info": "The employer reports the employment through the social-insurance process. You should check that your personal details and employment information are correct.", "shared": "Identity, employer and employment dates", "to_whom": "Health insurer / social-insurance institutions", "retention": "Social-insurance record", "reissuable": "Employer can provide confirmation", "submit_where": "Handled by employer", "issuer": "Employer / collection agency", "form_url": "https://www.deutsche-rentenversicherung.de/DRV/EN/Employers-and-contributors/employers-and-contributors_node.html"},
+            {"name": "Payslips and annual payroll statement", "initial_info": "Keep payroll documents showing gross pay, deductions and employer information. They help verify contributions and support tax filings.", "shared": "Pay and contribution information", "to_whom": "Employer / Finanzamt if required", "retention": "Keep for tax and pension administration", "reissuable": "Request from employer", "submit_where": "Employer payroll system", "issuer": "Employer", "form_url": "https://www.make-it-in-germany.com/en/working-in-germany/working-environment/salary-taxes-social-security/print"},
+        ],
+        "info": [
+            ("Covered branches", "Pension, health, long-term care, accident and unemployment protection", "BMAS"),
+            ("Registration", "Employer normally registers employees", "Deutsche Rentenversicherung"),
+            ("Insurance number", "Permanent identifier; keep it for future jobs", "Deutsche Rentenversicherung"),
+            ("Contributions", "Usually deducted automatically from pay; employer handles reporting", "BMAS"),
+        ],
+        "sources": [
+            "Federal Ministry of Labour and Social Affairs — Social insurance: https://www.bmas.bund.de/EN/Social-Affairs/Social-insurance/social-insurance.html",
+            "Deutsche Rentenversicherung — Versicherungsnummernachweis: https://www.deutsche-rentenversicherung.de/DRV/DE/Rente/Allgemeine-Informationen/Sozialversicherungsausweis/Sozialversicherungsausweis.html",
+            "Deutsche Rentenversicherung — Social security number: https://www.deutsche-rentenversicherung.de/SharedDocs/Glossareintraege/DE/S/sozialversicherungsnummer.html",
+        ],
+    },
+    "vehicle": {
+        "verified": True,
+        "summary": (
+            "An EU driving licence for harmonised categories is generally recognised in Germany and "
+            "does not normally need to be exchanged just because you move. A vehicle brought to "
+            "Germany is a separate question: insurance, taxes, conformity documents and local "
+            "registration requirements can apply once Germany becomes its normal location."
+        ),
+        "deadlines": [
+            {"trigger": "Before driving", "action": "Confirm your licence category and validity", "window": "before use", "fine": "driving without valid entitlement"},
+            {"trigger": "When vehicle is brought to Germany", "action": "Check registration, insurance and vehicle-tax requirements with the local authority", "window": "promptly", "fine": "case-dependent"},
+            {"trigger": "Before registration", "action": "Obtain liability insurance confirmation (eVB) and required conformity/inspection documents", "window": "before appointment", "fine": "registration blocked"},
+            {"trigger": "After registration", "action": "Keep registration certificate, insurance and inspection current", "window": "ongoing", "fine": "case-dependent"},
+        ],
+        "documents": [
+            {"name": "EU/EEA driving licence", "initial_info": "Valid EU/EEA licences for harmonised categories are generally recognised. Special rules apply to expired, restricted, non-harmonised or professionally used categories.", "shared": "Identity, licence categories and validity", "to_whom": "Police / driving-licence authority if requested", "retention": "Licence validity", "reissuable": "Renewal/replacement by issuing country or competent authority", "submit_where": "Carried while driving", "issuer": "Portuguese driving-licence authority", "form_url": "https://verwaltung.bund.de/leistungsverzeichnis/EN/leistung/99108047050001"},
+            {"name": "Vehicle registration certificate", "initial_info": "The foreign registration documents identify the vehicle and its current registration. Keep the originals available for any German registration process.", "shared": "Vehicle identity, owner and registration", "to_whom": "Vehicle registration authority", "retention": "Vehicle ownership/registration record", "reissuable": "Replacement by issuing authority", "submit_where": "Local Zulassungsstelle if registration is required", "issuer": "Portuguese vehicle authority", "form_url": "https://verwaltung.bund.de/leistungsverzeichnis/EN/leistung/99036020001001"},
+            {"name": "eVB insurance confirmation", "initial_info": "Electronic confirmation of German motor-liability insurance, normally required for German vehicle registration.", "shared": "Vehicle and insurance policy", "to_whom": "Vehicle registration authority", "retention": "Policy period", "reissuable": "Yes", "submit_where": "Insurer sends/activates electronically", "issuer": "German motor insurer", "form_url": "https://verwaltung.bund.de/leistungsverzeichnis/EN/leistung/99036020001001"},
+            {"name": "Certificate of Conformity (CoC) / technical documents", "initial_info": "EU conformity and technical documents can simplify registration. Additional inspection or evidence may be required depending on the vehicle and its documents.", "shared": "Vehicle technical specifications", "to_whom": "Vehicle registration authority / inspection body", "retention": "Vehicle record", "reissuable": "Manufacturer or inspection body may provide replacement", "submit_where": "Registration authority / technical inspection", "issuer": "Manufacturer / inspection body", "form_url": "https://verwaltung.bund.de/leistungsverzeichnis/EN/leistung/99036020001001"},
+        ],
+        "info": [
+            ("EU driving licence", "Harmonised categories generally do not need transfer after moving", "Bundesportal"),
+            ("Vehicle registration", "Depends on normal location, vehicle origin and local procedure", "Bundesportal / Zulassungsstelle"),
+            ("Insurance", "German registration requires liability insurance confirmation", "Bundesportal"),
+            ("Vehicle tax", "SEPA mandate or other tax process may be required", "Bundesportal"),
+        ],
+        "sources": [
+            "Bundesportal — EU/EEA driving licence: https://verwaltung.bund.de/leistungsverzeichnis/EN/leistung/99108047050001",
+            "Bundesportal — Vehicle registration: https://verwaltung.bund.de/leistungsverzeichnis/EN/leistung/99036020001001",
+            "Your Europe — Driving licences: https://europa.eu/youreurope/citizens/vehicles/driving-licence/index_en.htm",
+        ],
+    },
+    "family": {
+        "verified": True,
+        "summary": (
+            "Family members joining or accompanying an EU citizen may have residence rights under EU "
+            "free-movement rules. EU family members can generally work without a separate work permit; "
+            "non-EU family members may need an entry visa and residence card. Everyone who moves into "
+            "a German address must handle local registration, and relationship documents should be "
+            "prepared early."
+        ),
+        "deadlines": [
+            {"trigger": "Before travel", "action": "Check the family member’s nationality and entry-document requirements", "window": "before departure", "fine": "entry delay risk"},
+            {"trigger": "Move-in", "action": "Register the household at the Bürgeramt", "window": "14 days", "fine": "up to €1,000"},
+            {"trigger": "After registration", "action": "Arrange health insurance and tax records for each family member as applicable", "window": "promptly", "fine": "service/access delay"},
+            {"trigger": "For non-EU family members", "action": "Apply for the residence card through the Ausländerbehörde", "window": "after arrival / as instructed", "fine": "case-dependent"},
+        ],
+        "documents": [
+            {"name": "Proof of family relationship", "initial_info": "Marriage, registered-partnership, birth or dependency evidence may be needed. Ask the receiving authority whether translation, certification or an apostille is required.", "shared": "Identity, relationship and dependency information", "to_whom": "Bürgeramt / Ausländerbehörde / insurer", "retention": "Authority case record", "reissuable": "Replacement from civil registry", "submit_where": "Relevant authority when requested", "issuer": "Portuguese civil registry or other competent authority", "form_url": "https://justica.gov.pt/Servicos/Pedir-certidao-de-registo-civil"},
+            {"name": "Wohnungsgeberbestätigung", "initial_info": "Landlord confirmation for the shared address. The tenancy agreement alone does not replace this document for Anmeldung.", "shared": "Names, address and move-in date", "to_whom": "Bürgeramt", "retention": "Municipal registration record", "reissuable": "Yes", "submit_where": "Bürgeramt appointment", "issuer": "Landlord / accommodation provider", "form_url": "assets/pdf/wohnungsgeberbestaetigung_berlin.pdf"},
+            {"name": "Anmeldung → Meldebescheinigung", "initial_info": "Each person moving into the home should be included in the local address registration. One appointment may handle a household depending on local procedure.", "shared": "Identity, nationality, address and move-in date", "to_whom": "Bürgeramt / service providers", "retention": "Municipal register", "reissuable": "Yes", "submit_where": "Local Bürgeramt", "issuer": "Bürgeramt", "form_url": "https://service.berlin.de/dienstleistung/120686/en/"},
+            {"name": "Residence card for a non-EU family member (if applicable)", "initial_info": "A non-EU family member may need a residence card under EU free-movement rules. This is separate from the EU citizen’s own status and must be checked with the Ausländerbehörde.", "shared": "Identity, relationship and EU citizen’s residence basis", "to_whom": "Ausländerbehörde", "retention": "Residence case record", "reissuable": "Renewal/replacement under applicable rules", "submit_where": "Local Ausländerbehörde", "issuer": "Ausländerbehörde", "form_url": "https://www.eu-gleichbehandlungsstelle.de/eugs-en/eu-citizens/information-center/residence"},
+            {"name": "Health insurance / family co-insurance proof", "initial_info": "Arrange cover for each family member. Family co-insurance may be available under statutory insurance if the legal conditions are met.", "shared": "Identity, family relationship and insurance status", "to_whom": "Health insurer", "retention": "Coverage period", "reissuable": "Yes", "submit_where": "Health insurer", "issuer": "Krankenkasse / private insurer", "form_url": "https://www.bundesgesundheitsministerium.de/familienversicherung.html"},
+        ],
+        "info": [
+            ("EU family member", "May work without a separate work permit", "EU Equal Treatment Office"),
+            ("Non-EU family member", "May need an entry visa and residence card", "EU Equal Treatment Office"),
+            ("Address registration", "Within 14 days of moving in", "§17 BMG"),
+            ("Relationship documents", "Translation/certification requirements depend on the authority", "Receiving authority"),
+            ("Health cover", "Arrange for each family member; family insurance may be possible", "Federal Ministry of Health"),
+        ],
+        "sources": [
+            "EU Equal Treatment Office — Residence and family members: https://www.eu-gleichbehandlungsstelle.de/eugs-en/eu-citizens/information-center/residence",
+            "Directive 2004/38/EC: https://eur-lex.europa.eu/legal-content/EN/ALL/?uri=CELEX:32004L0038",
+            "Federal Ministry of Health — Family insurance: https://www.bundesgesundheitsministerium.de/familienversicherung.html",
+        ],
+    },
 }
 
 
@@ -479,19 +720,26 @@ def get_country(code):
 
 def get_content(country_code, intent_id, subject_id):
     """Return the dashboard dict for a (country, intent, subject), or None."""
-    if subject_id != "residence":
-        return None  # only residence is live in the MVP
-
     country = get_country(country_code)
     if not country:
         return None
 
     if intent_id == "traveling":
+        if country_code == "DE" and subject_id in _DE_SUBJECTS:
+            return _DE_SUBJECTS[subject_id]
+        if subject_id != "residence":
+            return None
         return _traveling_residence(country["name"])
 
     # moving
     if country_code == "DE":
+        if subject_id in _DE_SUBJECTS:
+            return _DE_SUBJECTS[subject_id]
+        if subject_id != "residence":
+            return None
         return _DE_MOVING
+    if subject_id != "residence":
+        return None
     if country_code == "ES":
         return _ES_MOVING
     if country_code in _MATRIX:
