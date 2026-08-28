@@ -79,7 +79,7 @@ class _EmergencyHomeState extends State<EmergencyHome> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('EU Data Compass'), actions: [IconButton(onPressed: api.token == null ? null : refresh, icon: const Icon(Icons.refresh))]),
+    appBar: AppBar(leading: Padding(padding: const EdgeInsets.all(8), child: Image.asset('assets/logo.png')), title: const Text('EU Data Compass'), actions: [IconButton(onPressed: api.token == null ? null : refresh, icon: const Icon(Icons.refresh))]),
     body: Padding(padding: const EdgeInsets.all(20), child: loading ? const Center(child: CircularProgressIndicator()) : ListView(children: [
       const Text('Emergency mode', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
       const SizedBox(height: 8),
