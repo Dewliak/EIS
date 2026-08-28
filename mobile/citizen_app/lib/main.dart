@@ -4,6 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:shared_preferences/shared_preferences.dart';
 
 // How long after informing the (simulated) emergency arrives. Small for the demo.
 const emergencyDelaySeconds = int.fromEnvironment('EMERGENCY_DELAY', defaultValue: 15);
@@ -221,7 +222,7 @@ class _HomeScreenState extends State<HomeScreen> {
         const Divider(height: 24),
         Text('Destination: ${t.countryName} · ${t.region}'),
         Text('Period: ${_fmt(t.from)} → ${_fmt(t.to)}'),
-        Text('Phone: ${t.phone}'),
+        Text('Phone: ${t.phone.isEmpty ? "not shared" : t.phone}'),
       ])),
     );
   }
@@ -258,7 +259,23 @@ class _InformScreenState extends State<InformScreen> {
   late Map<String, String> destination = destinations.first;
   late DateTime from = DateTime.now();
   late DateTime to = DateTime.now().add(const Duration(days: 14));
-  final phone = TextEditingController(text: '+351 912 345 678');
+  final phone = TextEditingController();
+  bool sharePhone = true;
+
+  static const _phoneKey = 'saved_phone';
+
+  @override
+  void initState() {
+    super.initState();
+    // Prefill from the locally-saved number (if the user entered one before).
+    SharedPreferences.getInstance().then((prefs) {
+      final saved = prefs.getString(_phoneKey);
+      if (saved != null && saved.isNotEmpty && mounted) setState(() => phone.text = saved);
+    });
+  }
+
+  @override
+  void dispose() { phone.dispose(); super.dispose(); }
 
   Future<void> _pick(bool isFrom) async {
     final now = DateTime.now();
@@ -276,17 +293,24 @@ class _InformScreenState extends State<InformScreen> {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('End date must be after start date.')));
       return;
     }
-    if (phone.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enter a mobile phone number.')));
-      return;
+    final entered = phone.text.trim();
+    // Save whatever was typed locally for next time (even if not shared now).
+    final prefs = await SharedPreferences.getInstance();
+    if (entered.isEmpty) {
+      await prefs.remove(_phoneKey);
+    } else {
+      await prefs.setString(_phoneKey, entered);
     }
+    if (!mounted) return;
     final approved = await Navigator.of(context).push<bool>(
       MaterialPageRoute(builder: (_) => const WalletMockScreen()),
     );
     if (approved != true || !mounted) return;
+    // Phone is optional; only include it when the user opted in and provided one.
+    final shared = (sharePhone && entered.isNotEmpty) ? entered : '';
     Navigator.pop(context, Trip(
       countryCode: destination['code']!, countryName: destination['name']!,
-      region: destination['region']!, phone: phone.text.trim(), from: from, to: to,
+      region: destination['region']!, phone: shared, from: from, to: to,
     ));
   }
 
@@ -311,11 +335,26 @@ class _InformScreenState extends State<InformScreen> {
         Expanded(child: OutlinedButton(onPressed: () => _pick(false), child: Text('To: ${_fmt(to)}'))),
       ]),
       const SizedBox(height: 18),
-      const Text('Mobile phone number', style: TextStyle(fontWeight: FontWeight.bold)),
+      const Text('Mobile phone number (optional)', style: TextStyle(fontWeight: FontWeight.bold)),
       const SizedBox(height: 8),
-      TextField(controller: phone, keyboardType: TextInputType.phone,
-        decoration: const InputDecoration(border: OutlineInputBorder(), prefixIcon: Icon(Icons.phone))),
-      const SizedBox(height: 24),
+      AutofillGroup(child: TextField(
+        controller: phone,
+        keyboardType: TextInputType.phone,
+        autofillHints: const [AutofillHints.telephoneNumber],
+        decoration: const InputDecoration(
+          border: OutlineInputBorder(), prefixIcon: Icon(Icons.phone),
+          hintText: 'e.g. +351 912 345 678',
+        ),
+      )),
+      CheckboxListTile(
+        contentPadding: EdgeInsets.zero,
+        controlAffinity: ListTileControlAffinity.leading,
+        value: sharePhone,
+        onChanged: (v) => setState(() => sharePhone = v ?? true),
+        title: const Text('Share my phone number with the government'),
+        subtitle: const Text('Used only to reach you in an emergency. Saved on this device either way.'),
+      ),
+      const SizedBox(height: 16),
       FilledButton.icon(onPressed: _submit, icon: const Icon(Icons.verified_user),
         style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
         label: const Text('Sign with EU ID Wallet & inform')),
