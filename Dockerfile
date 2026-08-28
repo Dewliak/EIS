@@ -15,6 +15,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY eudi_login ./eudi_login
 COPY webapp ./webapp
+COPY assets ./assets
 COPY .streamlit /.streamlit
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf

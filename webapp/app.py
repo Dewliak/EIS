@@ -13,6 +13,7 @@ destinations show rough/unverified matrix data, badged as such.
 Run:  streamlit run webapp/app.py
 """
 
+import base64
 import os
 import re
 import secrets
@@ -39,15 +40,18 @@ st.markdown(
     <style>
       :root { color-scheme: light; --eu-blue: #164194; --ink: #172b4d; --muted: #52627a; }
       html, body { color-scheme: light !important; background: #f7f9fc !important; }
-      html, body, [class*="css"] { font-size: 17px; }
+      html, body, [class*="css"] { font-size: 18px; }
       .stApp { background: #f7f9fc; color: var(--ink); }
       [data-testid="stMainBlockContainer"] { max-width: 1180px; padding-top: 2.25rem; }
       h1, h2, h3 { color: var(--ink); letter-spacing: -0.02em; }
       h2 { font-size: 2rem !important; }
       h3 { font-size: 1.35rem !important; }
-      p, label, .stCaption, [data-testid="stMarkdownContainer"] { line-height: 1.55; }
+      p, label, .stCaption, [data-testid="stMarkdownContainer"] { font-size: 1.02rem; line-height: 1.58; }
       .app-kicker { color: var(--eu-blue); font-size: .8rem; font-weight: 800; letter-spacing: .11em; text-transform: uppercase; }
       .app-title { color: var(--ink); font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; line-height: 1.05; margin: .3rem 0 .55rem; }
+      .app-logo { width: 7rem; height: 7rem; object-fit: cover; border-radius: 50%; margin: .1rem 1rem .25rem 0; }
+      .origin-badge { display: inline-flex; align-items: center; gap: .45rem; margin: .35rem 0 .7rem; padding: .5rem .8rem; border: 1px solid #b9cbea; border-radius: .5rem; background: #eaf1ff; color: #164194; font-size: .98rem; font-weight: 700; }
+      .origin-badge-label { color: #52627a; font-size: .78rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
       .stButton > button, .stSelectbox [data-baseweb="select"] { min-height: 2.9rem; font-size: 1rem; }
       .stButton > button { border-radius: .45rem; }
       [data-testid="stDataFrame"] { font-size: 1rem; }
@@ -116,16 +120,34 @@ _init_state()
 # Header
 # ---------------------------------------------------------------------------
 
+def _logo_data_uri():
+    logo_path = PROJECT_ROOT / "assets" / "cafyQi45.jpg"
+    if not logo_path.exists():
+        return ""
+    encoded = base64.b64encode(logo_path.read_bytes()).decode("ascii")
+    return f"data:image/jpeg;base64,{encoded}"
+
 def header(user):
     left, right = st.columns([0.75, 0.25])
     with left:
-        st.markdown('<div class="app-kicker">European Union mobility service</div>', unsafe_allow_html=True)
-        st.markdown('<div class="app-title">EU Data Compass</div>', unsafe_allow_html=True)
-        st.caption(
-            f"Portugal-hosted instance · Origin fixed to **{data.ORIGIN['name']}** · "
-            f"One interface for documents, deadlines and information "
-            f"across Europe."
-        )
+        logo, title = st.columns([0.18, 0.82])
+        with logo:
+            logo_uri = _logo_data_uri()
+            if logo_uri:
+                st.markdown(f'<img class="app-logo" src="{logo_uri}" alt="EU Data Compass logo">', unsafe_allow_html=True)
+        with title:
+            st.markdown('<div class="app-kicker">European Union mobility service</div>', unsafe_allow_html=True)
+            st.markdown('<div class="app-title">EU Data Compass</div>', unsafe_allow_html=True)
+            st.markdown(
+                f'<div class="origin-badge"><span class="origin-badge-label">Home country</span> '
+                f'{data.ORIGIN["name"]}</div>',
+                unsafe_allow_html=True,
+            )
+            st.caption(
+                f"Portugal-hosted instance · Origin fixed to **{data.ORIGIN['name']}** · "
+                f"One interface for documents, deadlines and information "
+                f"across Europe."
+            )
     with right:
         st.markdown(" ")
         st.caption(f"Wallet verified · {', '.join(user.nationalities)}")
@@ -143,7 +165,7 @@ def header(user):
 
 
 def breadcrumb():
-    parts = ["Portugal"]
+    parts = []
     if st.session_state.country:
         c = data.get_country(st.session_state.country)
         parts.append(c["name"])
@@ -153,7 +175,8 @@ def breadcrumb():
     if st.session_state.subject:
         s = next(x for x in data.SUBJECTS if x["id"] == st.session_state.subject)
         parts.append(s["name"])
-    st.markdown(" → ".join(parts))
+    if parts:
+        st.markdown(" → ".join(parts), unsafe_allow_html=True)
     st.divider()
 
 
