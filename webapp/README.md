@@ -16,8 +16,9 @@ subject, then lands in the **Deadlines · Documents · Information** dashboard
 Short-stay (traveling, < 3 months) content is real for **every** destination —
 it's the universal EU freedom-of-movement baseline.
 
-Only the **Residence & Registration** subject is live; other subjects are stubbed
-"coming soon". The **Inform with ID** button and per-document **Sign** button are
+Germany now includes sourced guides for Residence & Registration, Work, Studies,
+Tax, Health, Social security, Vehicle and Family. Other country/subject
+combinations may still be unavailable. The **Inform with ID** button and per-document **Sign** button are
 wallet-gated stubs (disabled) — the EUDI Wallet layer lands ~2027 (`docs/09` §6.2).
 
 Access to the site itself is protected by the EUDI Wallet verifier in
