@@ -37,7 +37,8 @@ st.set_page_config(page_title="EU Data Compass", layout="wide")
 st.markdown(
     """
     <style>
-      :root { --eu-blue: #164194; --ink: #172b4d; --muted: #52627a; }
+      :root { color-scheme: light; --eu-blue: #164194; --ink: #172b4d; --muted: #52627a; }
+      html, body { color-scheme: light !important; background: #f7f9fc !important; }
       html, body, [class*="css"] { font-size: 17px; }
       .stApp { background: #f7f9fc; color: var(--ink); }
       [data-testid="stMainBlockContainer"] { max-width: 1180px; padding-top: 2.25rem; }
@@ -176,7 +177,7 @@ def step_country():
         _reset("intent")
         st.rerun()
 
-    st.caption("Germany and Spain have verified content. Other destinations currently use draft matrix data.")
+    st.caption("Germany and Spain have verified content. Other destinations currently use universal short-stay or draft data.")
 
 
 # ---------------------------------------------------------------------------

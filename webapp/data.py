@@ -6,8 +6,9 @@ Structure mirrors the data model in docs/09-FULL-PLATFORM-SPEC.md §8:
     country -> intent (traveling|moving) -> subject -> {deadlines, documents, info}
 
 Only Germany and Spain carry VERIFIED content (docs 02, 03, 04, 10). The other
-seven destinations use the doc/11 registration matrix, which is partly
-UNVERIFIED — those are flagged `verified=False` so the UI can badge them as
+destinations use universal short-stay content or the available draft
+registration matrix, which is partly UNVERIFIED — those are flagged
+`verified=False` so the UI can badge them as
 mock/unverified. The short-stay (traveling) baseline is universal for EU
 citizens (freedom of movement), so it is real for every destination.
 
@@ -18,21 +19,39 @@ unknown the string "—" or an explicit "UNVERIFIED" note is used.
 ORIGIN = {"code": "PT", "name": "Portugal", "flag": "🇵🇹"}
 
 # ---------------------------------------------------------------------------
-# Country registry — real focus = Germany. Spain is the second verified case.
-# The rest come from the 8-country matrix (docs/11) and are marked unverified.
+# Country registry — all 27 EU member states. Germany and Spain are the
+# verified cases; the remaining destinations currently use universal short-stay
+# content or clearly labelled draft long-stay content.
 # ---------------------------------------------------------------------------
 
 COUNTRIES = [
-    {"code": "DE", "name": "Germany", "flag": "🇩🇪", "verified": True},
-    {"code": "ES", "name": "Spain", "flag": "🇪🇸", "verified": True},
-    {"code": "SK", "name": "Slovakia", "flag": "🇸🇰", "verified": False},
-    {"code": "HU", "name": "Hungary", "flag": "🇭🇺", "verified": False},
-    {"code": "SI", "name": "Slovenia", "flag": "🇸🇮", "verified": False},
-    {"code": "HR", "name": "Croatia", "flag": "🇭🇷", "verified": False},
-    {"code": "RO", "name": "Romania", "flag": "🇷🇴", "verified": False},
+    {"code": "AT", "name": "Austria", "flag": "🇦🇹", "verified": False},
+    {"code": "BE", "name": "Belgium", "flag": "🇧🇪", "verified": False},
     {"code": "BG", "name": "Bulgaria", "flag": "🇧🇬", "verified": False},
-    {"code": "GR", "name": "Greece", "flag": "🇬🇷", "verified": False},
     {"code": "CY", "name": "Cyprus", "flag": "🇨🇾", "verified": False},
+    {"code": "CZ", "name": "Czechia", "flag": "🇨🇿", "verified": False},
+    {"code": "DE", "name": "Germany", "flag": "🇩🇪", "verified": True},
+    {"code": "DK", "name": "Denmark", "flag": "🇩🇰", "verified": False},
+    {"code": "EE", "name": "Estonia", "flag": "🇪🇪", "verified": False},
+    {"code": "ES", "name": "Spain", "flag": "🇪🇸", "verified": True},
+    {"code": "FI", "name": "Finland", "flag": "🇫🇮", "verified": False},
+    {"code": "FR", "name": "France", "flag": "🇫🇷", "verified": False},
+    {"code": "GR", "name": "Greece", "flag": "🇬🇷", "verified": False},
+    {"code": "HR", "name": "Croatia", "flag": "🇭🇷", "verified": False},
+    {"code": "HU", "name": "Hungary", "flag": "🇭🇺", "verified": False},
+    {"code": "IE", "name": "Ireland", "flag": "🇮🇪", "verified": False},
+    {"code": "IT", "name": "Italy", "flag": "🇮🇹", "verified": False},
+    {"code": "LT", "name": "Lithuania", "flag": "🇱🇹", "verified": False},
+    {"code": "LU", "name": "Luxembourg", "flag": "🇱🇺", "verified": False},
+    {"code": "LV", "name": "Latvia", "flag": "🇱🇻", "verified": False},
+    {"code": "MT", "name": "Malta", "flag": "🇲🇹", "verified": False},
+    {"code": "NL", "name": "Netherlands", "flag": "🇳🇱", "verified": False},
+    {"code": "PL", "name": "Poland", "flag": "🇵🇱", "verified": False},
+    {"code": "PT", "name": "Portugal", "flag": "🇵🇹", "verified": False},
+    {"code": "RO", "name": "Romania", "flag": "🇷🇴", "verified": False},
+    {"code": "SE", "name": "Sweden", "flag": "🇸🇪", "verified": False},
+    {"code": "SI", "name": "Slovenia", "flag": "🇸🇮", "verified": False},
+    {"code": "SK", "name": "Slovakia", "flag": "🇸🇰", "verified": False},
 ]
 
 # Subjects. Only "residence" is live for the MVP (per docs/00 MVP scope).
@@ -306,7 +325,7 @@ _ES_MOVING = {
 
 
 # ---------------------------------------------------------------------------
-# The 8-country matrix (docs/11). UNVERIFIED where the doc says so.
+# The currently researched country matrix (docs/11). UNVERIFIED where the doc says so.
 # Built from the master fact table so the UI can show real structure with a
 # mock/unverified badge.
 # ---------------------------------------------------------------------------
