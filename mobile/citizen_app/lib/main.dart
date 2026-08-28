@@ -51,6 +51,9 @@ const _collectionPoint = {
 Future<void> _initNotifications() async {
   try {
     tzdata.initializeTimeZones();
+    // Without a local location, `tz.local` throws and scheduling silently fails.
+    // UTC is fine here: we only schedule relative offsets from "now".
+    tz.setLocalLocation(tz.getLocation('UTC'));
     const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
     await _fln.initialize(
       const InitializationSettings(android: androidInit),
@@ -67,26 +70,47 @@ Future<void> _initNotifications() async {
   } catch (_) {/* notifications unavailable (e.g. tests) — the in-app timer still works */}
 }
 
-Future<void> _scheduleEmergencyNotification() async {
+// Schedule a notification `seconds` from now. Tries an exact alarm first (fires
+// on time even in Doze); if the OS refuses exact alarms, falls back to inexact
+// so something still arrives rather than nothing.
+Future<void> _schedule(int id, String title, String body, int seconds) async {
   try {
-    final when = tz.TZDateTime.now(tz.local).add(const Duration(seconds: emergencyDelaySeconds));
-    await _fln.zonedSchedule(
-      1, _alert['title'] as String,
-      'Tap to open EU Compass for emergency instructions.',
-      when,
-      const NotificationDetails(android: AndroidNotificationDetails(
-        _channelId, 'Emergency alerts',
-        importance: Importance.max, priority: Priority.high,
-      )),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
-    );
-  } catch (_) {/* no plugin (tests) */}
+    final when = tz.TZDateTime.now(tz.local).add(Duration(seconds: seconds));
+    const details = NotificationDetails(android: AndroidNotificationDetails(
+      _channelId, 'Emergency alerts', importance: Importance.max, priority: Priority.high));
+    for (final mode in [AndroidScheduleMode.exactAllowWhileIdle, AndroidScheduleMode.inexactAllowWhileIdle]) {
+      try {
+        await _fln.zonedSchedule(id, title, body, when, details,
+          androidScheduleMode: mode,
+          uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime);
+        return; // scheduled
+      } catch (_) {/* try the next mode */}
+    }
+  } catch (_) {/* tz not initialised (e.g. tests) — the in-app timer still fires */}
 }
+
+Future<void> _scheduleEmergencyNotification() =>
+    _schedule(1, _alert['title'] as String, 'Tap to open EU Compass for emergency instructions.', emergencyDelaySeconds);
 
 Future<void> _cancelEmergencyNotification() async {
   try { await _fln.cancel(1); } catch (_) {}
 }
+
+// Ask for notification + exact-alarm permission. Called on a user gesture so
+// the Android 13+ system dialog reliably appears.
+Future<bool> _ensureNotificationPermissions() async {
+  try {
+    final android = _fln.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    final granted = await android?.requestNotificationsPermission();
+    await android?.requestExactAlarmsPermission();
+    final enabled = await android?.areNotificationsEnabled();
+    return enabled ?? granted ?? false;
+  } catch (_) { return false; }
+}
+
+// Fire a quick test notification (~5s) so the user can verify delivery works.
+Future<void> _showTestNotification() =>
+    _schedule(2, 'Test alert · EU Compass', 'If you can see this, notifications are working.', 5);
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -127,6 +151,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final List<Trip> trips = [];
   bool emergencyActive = false;
+  bool _notifEnabled = true;
   Timer? _timer;
 
   // The mock emergency is a Berlin flood: it only reaches trips whose
@@ -142,6 +167,7 @@ class _HomeScreenState extends State<HomeScreen> {
     _notificationTapped.addListener(_onNotificationTapped);
     _safeReported.addListener(_refresh);
     _locationShared.addListener(_refresh);
+    _ensureNotificationPermissions().then((ok) { if (mounted) setState(() => _notifEnabled = ok); });
   }
 
   @override
@@ -175,6 +201,8 @@ class _HomeScreenState extends State<HomeScreen> {
         trips.add(result);
       }
     });
+    final ok = await _ensureNotificationPermissions();
+    if (mounted) setState(() => _notifEnabled = ok);
     await _reevaluate();
   }
 
@@ -255,12 +283,35 @@ class _HomeScreenState extends State<HomeScreen> {
               _alertCard(),
               const SizedBox(height: 16),
             ],
+            if (!_notifEnabled)
+              Card(color: Colors.amber.shade100, child: ListTile(
+                leading: const Icon(Icons.notifications_off),
+                title: const Text('Notifications are off'),
+                subtitle: const Text('Enable them to receive emergency alerts.'),
+                trailing: TextButton(
+                  onPressed: () async {
+                    final ok = await _ensureNotificationPermissions();
+                    if (mounted) setState(() => _notifEnabled = ok);
+                  },
+                  child: const Text('Enable'),
+                ),
+              )),
             const Text('Your trips', style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             ...trips.map(_tripCard),
             const SizedBox(height: 8),
             OutlinedButton.icon(onPressed: () => _inform(),
               icon: const Icon(Icons.add), label: const Text('Add another trip')),
+            TextButton.icon(
+              icon: const Icon(Icons.notifications_active),
+              label: const Text('Send a test alert (~5s)'),
+              onPressed: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                await _showTestNotification();
+                messenger.showSnackBar(const SnackBar(
+                  content: Text('Test alert scheduled — leave the app to see it in ~5s.')));
+              },
+            ),
           ],
         ]),
       ),
