@@ -1,4 +1,11 @@
-# eudi_login/client.py
+"""eudi_login/client.py — Streamlit wallet-login widget.
+
+``EUDIWalletLogin.authenticate()`` is the whole public surface: call it at the top of a
+Streamlit page and it renders the QR sign-in gate, polls ``eudi_login/service.py`` every
+2 seconds via a fragment, and returns a verified ``EUDIUser`` once the wallet approves
+(or ``None`` while still pending/unauthenticated — the caller should ``st.stop()`` in
+that case). Used by both ``login_app.py`` and ``webapp/app.py``.
+"""
 from dataclasses import dataclass
 from typing import Optional
 

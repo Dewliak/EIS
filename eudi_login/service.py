@@ -1,4 +1,19 @@
-# eudi_login/service.py
+"""eudi_login/service.py — FastAPI backend for EIS.
+
+Two things live in this one service:
+
+1. EUDI Wallet login (``/login``, ``/callback``, ``/status/{state}``) — a **prototype**
+   OpenID4VP verifier against the public EUDI sandbox. No production-grade signature,
+   trust-chain, key-binding, or revocation checks. Used by ``eudi_login/client.py``
+   (the Streamlit wallet-login widget).
+2. The emergency-alert demo API (``/api/citizen/*``, ``/api/authority/*``) used by the
+   Flutter apps in ``mobile/``. Auth there is a throwaway demo bearer token, not the
+   wallet flow above — see ``docs/07-emergency/EMERGENCY-DEMO.md`` for the full API
+   reference, data model, and what's mocked (satellite detection, push delivery).
+
+State: an in-memory dict for wallet-login sessions and demo tokens (lost on restart),
+plus a SQLite file (``DATABASE_PATH``, default ``eis.db``) for the emergency-alert data.
+"""
 import base64
 import json
 import os

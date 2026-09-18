@@ -3,6 +3,9 @@
 The complete research + specification for the **European Impact Sprints** platform.
 Worked example: **Portuguese citizens → Germany**. Hosted model: Portugal-hosted, origin fixed.
 
+> This folder is the **research**. For the running system — architecture diagrams, what's built
+> vs mocked, how to launch it — start at [`../readme.md`](../readme.md).
+
 ## Start here
 - **`01-plan/IMPLEMENTATION-PLAN.md`** — the master build plan (site map, pages, flows, doc map).
 
@@ -15,6 +18,8 @@ Worked example: **Portuguese citizens → Germany**. Hosted model: Portugal-host
 | `03-cases/` | The 7 subcategories + per-case docs |
 | `04-research/` | Personas, worked cases, documents index, 27-country matrix |
 | `05-resources/` | Sources, PDF URLs, assisting platforms |
+| `06-subjects/` | Research for the 7 non-residence subjects (Work, Studies, Tax, Health, Social security, Vehicle, Family) |
+| `07-emergency/` | What the emergency-alert demo actually implements (API + data model) |
 | `assets/pdf/` | Fetched forms (3 PDFs) |
 
 ## Files
@@ -49,6 +54,15 @@ Worked example: **Portuguese citizens → Germany**. Hosted model: Portugal-host
 - `SOURCES.md` — verified primary + secondary sources
 - `PDF-URLS.md` — PDF links + fetch notes
 - `ASSISTING-PLATFORMS.md` — existing platforms + competitors (MoveToEU etc.)
+
+### 06-subjects
+- `README.md` — index + content-model note for the 7 subject files below
+- `work.md`, `studies.md`, `tax.md`, `health.md`, `social-security.md`, `vehicle.md`, `family.md` —
+  research backing `webapp/data.py`'s `_DE_SUBJECTS` (Germany, all live in the web app today)
+
+### 07-emergency
+- `EMERGENCY-DEMO.md` — the emergency-alert demo's backend API, data model, and what's mocked vs
+  real; see also `12-EMERGENCY-ROUTING-PROPOSAL.md` below for the target multi-country design
 
 ### assets/pdf
 - `wohnungsgeberbestaetigung_berlin.pdf` — DE landlord confirmation (§19 BMG)

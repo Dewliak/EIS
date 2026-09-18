@@ -1,3 +1,14 @@
+// EU Compass — citizen app (mobile/citizen_app).
+//
+// Screens, in flow order: WalletMockScreen (simulated wallet approval) ->
+// HomeScreen (trip list) -> InformScreen (register/update a trip) ->
+// AlertDetailScreen (acknowledge / safe / help + opt-in location check-in).
+//
+// Runs standalone with mock data by default (USE_MOCK=true); see
+// mobile/README.md and docs/07-emergency/EMERGENCY-DEMO.md for the real-backend
+// mode, the API it calls, and what's mocked (wallet step, satellite detection,
+// push delivery — local notifications only here).
+
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';

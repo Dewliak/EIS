@@ -6,9 +6,13 @@
 > **Hosting model:** Portugal-hosted instance. **Origin fixed = Portugal (Portuguese citizens).**
 > **Destination = Germany** (primary worked case; 27-country data available for expansion).
 >
-> **Current state:** `../../webapp/` is a Streamlit prototype (single dashboard, Residence-only
-> subject, wallet stubs disabled). **This plan specs the target** — a multi-page, professional
-> EU-portal look (no Streamlit-default / "AI-ish" chrome). The Flask EUDI verifier is `../../login_app.py`.
+> **Current state:** `../../webapp/` is a Streamlit prototype — a single dashboard page, but all 8
+> subjects are live for Germany, and "Inform with ID" / document-sign are working mock flows (not
+> disabled stubs). See [`../../readme.md`](../../readme.md#what-works-today) for the current
+> works/doesn't breakdown. **This plan specs the target** — a multi-page, professional EU-portal
+> look (no Streamlit-default / "AI-ish" chrome). The FastAPI EUDI verifier is
+> `../../eudi_login/service.py`; `../../login_app.py` is a standalone Streamlit login demo, not the
+> verifier itself.
 
 ---
 
@@ -134,7 +138,9 @@ The card links to `/document/<id>` (PDF viewer + Sign).
 
 > ⚠️ Wallet is **not yet production-live** (mandatory from 24 Dec 2026, `../02-spec/EUDI-WALLET.md`).
 > Build the Sign button + flow behind an interface now; it activates when production wallets roll
-> out. The Flask verifier `../../login_app.py` is the prototype (OpenID4VP, mocked verification).
+> out. The prototype verifier is `../../eudi_login/service.py` (FastAPI, OpenID4VP, mocked
+> verification); `../../webapp/app.py` already ships a working mock-sign dialog for this — see
+> [`../../readme.md`](../../readme.md#what-works-today).
 
 ---
 
@@ -217,6 +223,5 @@ fields) · `deadline` · `info` · `travel_notification` · `signed_document`.
 ## 10. Open items for the user
 
 - **Canonical folder: `docs/`** (resolved — everything folded in; `documentation/` removed).
-- **Sibling `webapp/README.md` paths** — still references flat `docs/00…`, `docs/09…`; update to
-  `docs/02-spec/…` etc. (the sibling is actively editing `webapp/` — coordinate before touching).
+- **Sibling `webapp/README.md` paths** (resolved — now references the numbered `docs/0N-…/` folders).
 - **Wallet-gated features** land ~2027 — confirm MVP ships mobility content first, wallet later.

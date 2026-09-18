@@ -1,7 +1,8 @@
-# Subjects — research for the 7 "coming soon" categories
+# Subjects — research for the 7 non-residence categories
 
-Fills the `webapp/data.py` `SUBJECTS` list (residence is already live). Each subject has two
-sections: **Traveling (<3 months)** and **Moving (>3 months)**, matching the `intent` split.
+Backs the `_DE_SUBJECTS` dict in `webapp/data.py` — all 8 subjects (these 7 plus Residence) are
+live in the web app for Germany today. Each subject has two sections: **Traveling (<3 months)**
+and **Moving (>3 months)**, matching the `intent` split.
 
 Content model (maps 1:1 to `data.py` `get_content`):
 `deadlines[]` · `documents[]{name, initial_info, shared, to_whom, retention, reissuable,

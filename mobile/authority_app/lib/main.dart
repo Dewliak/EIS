@@ -1,3 +1,12 @@
+// EU Compass — authority app (mobile/authority_app).
+//
+// Single screen (AuthorityHome): "Simulate, review and publish alert" walks
+// through the whole authority side of the emergency demo in one tap —
+// simulate a hazard, review it, draft an alert, publish it. See
+// mobile/README.md and docs/07-emergency/EMERGENCY-DEMO.md for the API calls
+// this makes against a real backend and what's mocked (no real satellite
+// detection, no real authority login).
+
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;

@@ -1,6 +1,10 @@
 # 12 — Emergency Routing Proposal (inter-country communication)
 
-**Resolves the #1 flagged gap in `09-FULL-PLATFORM-SPEC.md`:** the "home country → host country →
+> This is the **target design**. For what's actually built today (one backend, one country's
+> authority, one country's citizens — leg 3 of §4 below, collapsed to a single node), see
+> [`07-emergency/EMERGENCY-DEMO.md`](07-emergency/EMERGENCY-DEMO.md).
+
+**Resolves the #1 flagged gap in `02-spec/PLATFORM-SPEC.md`:** the "home country → host country →
 citizen SMS" routing does **not exist** as a standard EU service today. This document maps the
 channels that *do* exist, isolates exactly what's missing, and proposes a concrete architecture +
 what we propose to the EU/countries.

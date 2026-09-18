@@ -1,8 +1,9 @@
 # EU Data Compass web app (Streamlit prototype)
 
-Portugal-hosted instance of the EU Data Compass mobility platform. Origin is fixed to
-Portugal; the user picks a destination, an intent (traveling / moving), and a
-subject, then lands in the **Deadlines · Documents · Information** dashboard.
+Part of the [EIS monorepo](../readme.md). Portugal-hosted instance of the EU Data Compass mobility
+platform. Origin is fixed to Portugal; the user picks a destination, an intent (traveling /
+moving), and a subject, then lands in the **Deadlines · Documents · Information · Data & privacy**
+dashboard.
 
 Access to the whole app is **gated by the EUDI Wallet verifier** — the Streamlit
 client shows a QR sign-in request and only the configured nationalities are let
@@ -10,30 +11,35 @@ in before any content renders.
 
 > **Prototype, not the target.** The build target is the multi-page EU-portal
 > app in [`../docs/01-plan/IMPLEMENTATION-PLAN.md`](../docs/01-plan/IMPLEMENTATION-PLAN.md)
-> (spec: `../docs/02-spec/PLATFORM-SPEC.md`). This prototype covers the single
-> dashboard + the Residence subject only.
+> (spec: `../docs/02-spec/PLATFORM-SPEC.md`). This prototype covers a single dashboard page.
 
 ## What's real vs mock
 
 | Destination | Content | Source |
 |---|---|---|
-| 🇩🇪 Germany | **Verified** — primary worked case (PT → DE) | `docs/04-research/MOVING-CASE.md`, `DOCUMENTS-INDEX.md` |
-| 🇪🇸 Spain | **Verified** — second case | `docs/04-research/SPAIN-VALIDATION.md` |
-| SK, HU, SI, HR, RO, BG, GR, CY | **Rough / unverified** — badged in the UI | `docs/04-research/COUNTRY-MATRIX.md` |
+| 🇩🇪 Germany | **Verified** — all 8 subjects (Residence, Work, Studies, Tax, Health, Social security, Vehicle, Family), for both traveling and moving in | `../docs/04-research/`, `../docs/06-subjects/` |
+| 🇪🇸 Spain | **Verified** — moving-in case | `../docs/04-research/SPAIN-VALIDATION.md` |
+| SK, HU, SI, HR, RO, BG, GR, CY | **Rough / unverified** — badged in the UI | `../docs/04-research/COUNTRY-MATRIX.md` |
+| Everyone else | Universal short-stay (< 3 months) baseline only | `../docs/04-research/TRAVELING-CASE.md` |
 
-Short-stay (traveling, < 3 months) content is real for **every** destination —
-the universal EU freedom-of-movement baseline (`docs/04-research/TRAVELING-CASE.md`).
+All 8 subject buttons are clickable for every country; non-Germany/Spain destinations show "No
+content available for this combination yet" outside the short-stay baseline.
 
-Germany now includes sourced guides for Residence & Registration, Work, Studies,
-Tax, Health, Social security, Vehicle and Family. Other country/subject
-combinations may still be unavailable. The **Inform with ID** button and per-document **Sign** button are
-wallet-gated stubs (disabled) — the EUDI Wallet layer lands ~2027 (`docs/09` §6.2).
+**Inform with ID** is a full working prototype flow (draft → review → "approve with EU Wallet
+(demo)"), not a stub — it stores the notification in the browser session and explains retention in
+the Data & privacy tab. Each document card's **Sign with wallet** button opens a mock signing
+dialog that returns a downloadable demo PDF. Neither is a real EUDI Wallet transaction — both are
+demo/mock flows layered on top of the real wallet-login gate that protects the whole app.
+
+There's also a **"Try the Berlin conference demo"** shortcut on the destination-picker screen: a
+dedicated short-stay business-travel scenario for Germany (`webapp/data.py:_germany_traveling`),
+separate from the regular Germany content.
 
 ## Pieces
 
 | Piece | What | Port |
 |---|---|---|
-| `../eudi_login/service.py` | **FastAPI** verifier (OpenID4VP, mocked). Issues the QR, polls, checks nationality. | 5000 |
+| `../eudi_login/service.py` | **FastAPI** verifier (OpenID4VP, mocked). Issues the QR, polls, checks nationality — also hosts the mobile apps' emergency-alert API, see [`../docs/07-emergency/EMERGENCY-DEMO.md`](../docs/07-emergency/EMERGENCY-DEMO.md). | 5000 |
 | `../eudi_login/client.py` | Streamlit login widget the app calls to gate access. | — |
 | `app.py` | The mobility dashboard, gated by the client above. | 8501 |
 | `data.py` | Content dataset (no invented facts; sourced from `../docs`). | — |

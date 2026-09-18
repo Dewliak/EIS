@@ -1,13 +1,15 @@
-# 09 — Full Platform Specification (Web + Mobile)
+# Full Platform Specification (Web + Mobile)
 
 > The master specification for the **European Impact Sprints (EIS)** unified mobility platform.
-> Consolidates the existing research (`00`–`08`) with the full product vision described by the
-> founder, including the **web application**, the **mobile application**, the **EUDI Wallet
-> integration**, and the **emergency management system**. Also contains the research findings and
-> the **step-by-step research plan** for the features still to be investigated.
+> Consolidates the existing research (`01-plan`–`05-resources`) with the full product vision
+> described by the founder, including the **web application**, the **mobile application**, the
+> **EUDI Wallet integration**, and the **emergency management system**. Also contains the research
+> findings and the **step-by-step research plan** for the features still to be investigated.
 >
-> Status: **Specification / research phase.** No production code yet. `EIS/app.py` is a prototype
-> EUDI verifier (see §6.5), not production-ready.
+> Status: **this spec describes the target.** A working prototype now exists for most of it — the
+> Streamlit web app, the FastAPI EUDI verifier, and the Flutter emergency-demo apps — but it's a
+> single-page prototype, not the multi-page production build this document specs. See
+> [`../../readme.md`](../../readme.md#what-works-today) for exactly what's built vs mocked today.
 
 ---
 
@@ -252,9 +254,11 @@ or *"over 18"* **without revealing the full underlying document**. This is exact
 "Inform with ID" flow needs — share only `nationality` + travel dates, nothing else. It also means
 the verifier never learns *where else* the citizen used their identity.
 
-### 6.5 Existing prototype — `EIS/app.py`
+### 6.5 Existing prototype — `eudi_login/service.py`
 
-A minimal Flask **OpenID4VP Relying Party** (verifier) already exists in the repo. It:
+A minimal FastAPI **OpenID4VP Relying Party** (verifier) already exists in the repo (originally
+written as a standalone Flask script, since folded into the FastAPI service everything else
+shares). It:
 
 - builds an OpenID4VP authorization request (DCQL query) asking for the PID `nationality` claim,
 - shows it as a QR code,
@@ -265,7 +269,8 @@ A minimal Flask **OpenID4VP Relying Party** (verifier) already exists in the rep
 verification, key-binding checks, revocation/status-list checks, replay protection, and signed
 request objects (JAR). A production verifier must implement all of these against the EUDI **ARF**
 (Architecture & Reference Framework) and the member-state trust lists. Test against the public
-sandbox **eudi-test.dev** (requires an https tunnel, e.g. cloudflared/ngrok).
+sandbox **eudi-test.dev** (requires an https tunnel, e.g. cloudflared/ngrok). See
+[`../../readme.md`](../../readme.md#what-works-today) for the current state of the whole prototype.
 
 ---
 

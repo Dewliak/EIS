@@ -1,6 +1,14 @@
 # EU Compass mobile clients
 
-These Android-first Flutter clients implement the emergency-mode demo: travel registration, authority review/publication, alerts, acknowledgement, and consent-based location check-ins. The wallet step is a simulated EU Digital Identity Wallet screen.
+Part of the [EIS monorepo](../readme.md). These Android-first Flutter clients implement the
+emergency-mode demo: travel registration, authority review/publication, alerts, acknowledgement,
+and consent-based location check-ins. The wallet step is a simulated EU Digital Identity Wallet
+screen.
+
+- [`citizen_app/README.md`](citizen_app/README.md) — screens and what the citizen side does.
+- [`authority_app/README.md`](authority_app/README.md) — screens and what the authority side does.
+- [`../docs/07-emergency/EMERGENCY-DEMO.md`](../docs/07-emergency/EMERGENCY-DEMO.md) — backend API,
+  data model, and the full list of what's real vs mocked in this slice.
 
 The first slice labels satellite observations and delivery as simulated. Copernicus data ingestion, Galileo EWSS broadcast and production Firebase credentials are integration work for a later phase.
 
