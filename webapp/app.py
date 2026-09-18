@@ -103,6 +103,8 @@ def _init_state():
     st.session_state.setdefault("country", None)
     st.session_state.setdefault("intent", None)
     st.session_state.setdefault("subject", None)
+    st.session_state.setdefault("travel_purpose", None)
+    st.session_state.setdefault("travel_context", None)
     st.session_state.setdefault("inform_stage", "draft")
     st.session_state.setdefault("inform_draft", None)
     st.session_state.setdefault("travel_notification", None)
@@ -126,6 +128,9 @@ def _reset(to_step):
     order = ["country", "intent", "subject"]
     for key in order[order.index(to_step):]:
         st.session_state[key] = None
+    if to_step in ("country", "intent"):
+        st.session_state.travel_purpose = None
+        st.session_state.travel_context = None
 
 
 _init_state()
@@ -245,6 +250,21 @@ def step_country():
     else:
         st.caption("Germany and Spain have verified content. Other destinations currently use universal short-stay or draft data.")
 
+    if st.button("Try the Berlin conference demo", key="berlin_conference_demo", use_container_width=True):
+        start = date.today()
+        end = start + timedelta(days=21)
+        st.session_state.country = "DE"
+        st.session_state.intent = "traveling"
+        st.session_state.subject = "residence"
+        st.session_state.travel_purpose = "business"
+        st.session_state.travel_context = {
+            "city": "Berlin",
+            "start_date": start.isoformat(),
+            "end_date": end.isoformat(),
+            "duration_days": 21,
+        }
+        st.rerun()
+
 
 # ---------------------------------------------------------------------------
 # Step 2 — intent
@@ -271,6 +291,36 @@ def step_intent():
 # ---------------------------------------------------------------------------
 
 def step_subject():
+    if st.session_state.country == "DE" and st.session_state.intent == "traveling":
+        st.subheader("Tell us about your trip")
+        st.write("We use this information to tailor the Germany short-stay guidance. It does not create a legal registration.")
+        with st.form("germany_travel_context"):
+            purpose = st.selectbox(
+                "Purpose of travel",
+                data.TRAVEL_PURPOSES,
+                format_func=lambda item: f'{item["name"]} — {item["description"]}',
+            )
+            city = st.text_input("Destination city", value="Berlin", placeholder="Berlin")
+            start_date = st.date_input("Travel starts", value=date.today(), min_value=date.today())
+            end_date = st.date_input("Travel ends", value=date.today() + timedelta(days=21), min_value=date.today())
+            submitted = st.form_submit_button("Show my Germany travel plan", type="primary", use_container_width=True)
+        if submitted:
+            if not city.strip():
+                st.error("Enter a destination city.")
+            elif end_date < start_date:
+                st.error("Travel end date must be on or after the start date.")
+            else:
+                st.session_state.travel_purpose = purpose["id"]
+                st.session_state.travel_context = {
+                    "city": city.strip(),
+                    "start_date": start_date.isoformat(),
+                    "end_date": end_date.isoformat(),
+                    "duration_days": (end_date - start_date).days + 1,
+                }
+                st.session_state.subject = "residence"
+                st.rerun()
+        return
+
     st.subheader("What do you need help with?")
     st.caption("Choose the area you want to explore.")
     cols = st.columns(4)
@@ -450,6 +500,9 @@ def deadline_timeline(deadlines):
         action = escape(str(deadline["action"]))
         window = escape(str(deadline["window"]))
         fine = escape(str(deadline["fine"]))
+        source = ""
+        if deadline.get("source_url"):
+            source = f'<span>Source: <a href="{escape(deadline["source_url"])}" target="_blank">{escape(deadline.get("source_label", "Official source"))}</a></span>'
         items.append(
             f'''<div class="deadline-item">
                   <div class="deadline-marker">{index}</div>
@@ -460,7 +513,7 @@ def deadline_timeline(deadlines):
                     <div class="deadline-details">
                       <span>Time allowed: <strong>{window}</strong></span>
                       <span>Fine / consequence: <strong>{fine}</strong></span>
-                    </div>
+                      {source}</div>
                   </div>
                 </div>'''
         )
@@ -666,7 +719,13 @@ def document_card(doc):
 def dashboard():
     c = data.get_country(st.session_state.country)
     intent = st.session_state.intent
-    content = data.get_content(c["code"], intent, st.session_state.subject)
+    content = data.get_content(
+        c["code"],
+        intent,
+        st.session_state.subject,
+        travel_purpose=st.session_state.travel_purpose,
+        travel_context=st.session_state.travel_context,
+    )
 
     if content is None:
         st.warning("No content available for this combination yet.")
@@ -679,8 +738,14 @@ def dashboard():
     else:
         st.success("Verified content — sourced from primary references (see the Information tab).")
 
-    plan_at_a_glance(c, intent, content)
+    if content.get("demo_title"):
+        st.markdown(f'### {content["demo_title"]}')
+        st.caption(f'Travel purpose: {content["demo_purpose"]}')
+    else:
+        plan_at_a_glance(c, intent, content)
     st.info(content["summary"])
+    if c["code"] == "DE" and intent == "traveling":
+        st.success("You are ready to travel: keep your valid Portuguese ID or passport with you. No German residence registration is required for this temporary-visit scenario.")
     inform_with_id()
 
     # Re-open the wallet signing dialog across reruns while it is active.
@@ -700,15 +765,32 @@ def dashboard():
     with tab_docs:
         st.markdown("#### Documents & forms")
         st.caption("Open a card for details, official links, a form preview, and the signing flow.")
-        for doc in content["documents"]:
-            document_card(doc)
+        status_sections = [
+            ("required", "Required for this scenario"),
+            ("recommended", "Recommended"),
+            ("optional", "Optional"),
+            ("not_required", "Not required for this scenario"),
+        ]
+        for status, heading in status_sections:
+            docs = [doc for doc in content["documents"] if doc.get("required", "required") == status]
+            if not docs:
+                continue
+            st.markdown(f"#### {heading}")
+            for doc in docs:
+                document_card(doc)
 
     with tab_info:
-        st.markdown("#### Rules & thresholds")
-        for rule, value, source in content["info"]:
-            with st.container(border=True):
-                st.markdown(f"**{rule}** — {value}")
-                st.caption(f"Source: {source}")
+        st.markdown("#### Rules, thresholds & contacts")
+        info_rows = []
+        for item in content["info"]:
+            if isinstance(item, dict):
+                info_rows.append({"Rule": item["label"], "Value": item["value"], "Source": item["source_label"]})
+            else:
+                info_rows.append({"Rule": item[0], "Value": item[1], "Source": item[2]})
+        st.dataframe(info_rows, use_container_width=True, hide_index=True)
+        for item in content["info"]:
+            if isinstance(item, dict):
+                st.markdown(f'[{item["label"]}: official source]({item["source_url"]})')
         st.markdown("#### Sources")
         for s in content["sources"]:
             st.markdown(f"- {s}")

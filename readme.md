@@ -53,6 +53,16 @@ cloudflared tunnel --url http://localhost:8080
 See `webapp/README.md` for the full local and Railway configuration, including
 `PUBLIC_BASE_URL` and `EUDI_API_URL`.
 
+### Emergency mobile demo
+
+The Android-first Flutter clients are in `mobile/citizen_app` and
+`mobile/authority_app`. Run the backend with Docker, then follow
+`mobile/README.md`. The authority client can simulate a Copernicus-labelled
+hazard, review it, and publish an alert to matching Portugal → Germany demo
+travellers. The citizen client supports acknowledgement, safe/help status, and
+explicit once-per-day location check-ins. Satellite observations and delivery
+are clearly marked simulated in this first slice.
+
 Test against the public sandbox **eudi-test.dev** (needs https to reach your `/callback`).
 
 ### Local dev
