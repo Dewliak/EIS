@@ -1,5 +1,9 @@
 # Session Summary — What This Agent Did
 
+> ⚠️ **Superseded.** The canonical project summary is now `docs/01-plan/IMPLEMENTATION-PLAN.md` +
+> `docs/README.md`. Folder was later renamed `documentation/` → `docs/`. This file is a historical
+> session log, kept for reference only.
+
 > Meta-document: a record of the work done in this session, for review.
 > Written: 27 Aug 2026. Project: **EIS (European Impact Sprints)**.
 

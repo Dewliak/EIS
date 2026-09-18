@@ -114,4 +114,4 @@ Each case doc follows one template:
   - Art. 14(4)(b) — job-seekers (can't be expelled while genuinely seeking work).
   - Art. 16 — permanent residence after 5 years.
 - **Freizügigkeitsgesetz/EU (Germany)** — implements the directive; §2 conditions, §5 notice of
-  residence (Aufenthaltsanzeige form — see `assets/pdf/`).
+  residence (Aufenthaltsanzeige form — see `../assets/pdf/`).

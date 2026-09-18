@@ -1,7 +1,7 @@
 """
  EU Data Compass content dataset — Portugal-hosted instance (origin = Portugal).
 
-Structure mirrors the data model in docs/09-FULL-PLATFORM-SPEC.md §8:
+Structure mirrors the data model in docs/02-spec/PLATFORM-SPEC.md §8:
 
     country -> intent (traveling|moving) -> subject -> {deadlines, documents, info}
 
@@ -54,7 +54,7 @@ COUNTRIES = [
     {"code": "SE", "name": "Sweden", "flag": "🇸🇪", "verified": False},
 ]
 
-# Categories currently available in the demo.
+# Subjects. Only "residence" is live for the MVP (per docs/01-plan/IMPLEMENTATION-PLAN.md build order).
 SUBJECTS = [
     {"id": "residence", "name": "Residence & Registration", "icon": "🏠", "live": True},
     {"id": "work", "name": "Work", "icon": "💼", "live": False},
@@ -73,7 +73,7 @@ INTENTS = [
 
 
 # ---------------------------------------------------------------------------
-# Universal short-stay baseline (freedom of movement — verified, docs/02).
+# Universal short-stay baseline (freedom of movement — verified, docs/04-research/TRAVELING-CASE.md).
 # Same for every destination for EU citizens.
 # ---------------------------------------------------------------------------
 
@@ -129,7 +129,7 @@ def _traveling_residence(dest_name):
             ("Short-stay right", "≤ 3 months, valid ID only, no conditions", "Freedom of Movement Act/EU"),
             ("Visa / residence permit", "Not needed for EU citizens", "Freedom of Movement Act/EU (2005)"),
             ("Healthcare", "EHIC covers necessary care during the stay", "ehic.europa.eu"),
-            ("If the trip becomes a move", "Destination's registration clock activates — see the Moving intent", "docs/02, docs/03"),
+            ("If the trip becomes a move", "Destination's registration clock activates — see the Moving intent", "docs/04-research/MOVING-CASE.md"),
         ],
         "sources": [
             "EU freedom of movement — https://europa.eu/youreurope/citizens/residence/",
@@ -139,7 +139,7 @@ def _traveling_residence(dest_name):
 
 
 # ---------------------------------------------------------------------------
-# Germany — VERIFIED moving case (docs/03, docs/04). The real focus.
+# Germany — VERIFIED moving case (docs/04-research/MOVING-CASE.md, DOCUMENTS-INDEX.md). The real focus.
 # ---------------------------------------------------------------------------
 
 _DE_MOVING = {
@@ -165,9 +165,13 @@ _DE_MOVING = {
             "to_whom": "Bürgeramt (via you, at Anmeldung)",
             "retention": "Held in the registration record",
             "reissuable": "Yes (landlord re-signs)",
-            "submit_where": "Bürgeramt appointment",
+            "submit_where": "Signed by your landlord, then handed in at the Bürgeramt during your Anmeldung.",
+            "office": "Landlord / letting agent signs it; you bring it to the Bürgeramt.",
+            "submit_url": "https://www.berlinstadtservice.de/pdf/Wohnungsgeberbescheinigung.pdf",
+            "submit_url_label": "Berlin form template",
+            "pdf": "docs/assets/pdf/wohnungsgeberbestaetigung_berlin.pdf",
             "issuer": "Landlord / agent",
-            "form_url": "assets/pdf/wohnungsgeberbestaetigung_berlin.pdf",
+            "form_url": "https://www.berlinstadtservice.de/pdf/Wohnungsgeberbescheinigung.pdf",
         },
         {
             "name": "Anmeldung → Meldebescheinigung (registration)",
@@ -176,7 +180,11 @@ _DE_MOVING = {
             "to_whom": "Bürgeramt / Meldebehörde",
             "retention": "Municipal register (ongoing while resident)",
             "reissuable": "Yes (request a new certificate)",
-            "submit_where": "Local Bürgeramt (in person or via power of attorney)",
+            "submit_where": "In person at your local Bürgeramt (or via a representative with power of attorney).",
+            "office": "Bürgeramt / Meldebehörde (local registration office).",
+            "submit_url": "https://service.berlin.de/dienstleistung/120686/",
+            "submit_url_label": "Book a Bürgeramt appointment (Berlin)",
+            "pdf": None,
             "issuer": "Bürgeramt",
             "form_url": None,
         },
@@ -187,7 +195,11 @@ _DE_MOVING = {
             "to_whom": "Federal Central Tax Office (BZSt)",
             "retention": "Permanent tax identifier",
             "reissuable": "Re-notification possible",
-            "submit_where": "Automatic — arrives by post",
+            "submit_where": "Nothing to submit — it is issued automatically after your Anmeldung and posted to you.",
+            "office": "Federal Central Tax Office (BZSt) — no appointment needed.",
+            "submit_url": "https://www.bzst.de/EN/Home/home_node.html",
+            "submit_url_label": "BZSt (Federal Central Tax Office)",
+            "pdf": None,
             "issuer": "BZSt",
             "form_url": None,
         },
@@ -198,7 +210,11 @@ _DE_MOVING = {
             "to_whom": "Public/private insurer",
             "retention": "Membership duration",
             "reissuable": "Yes",
-            "submit_where": "Insurer",
+            "submit_where": "Apply directly with a health insurer; your employer usually registers you once you start work.",
+            "office": "A public Krankenkasse (e.g. TK, AOK, Barmer) or a private insurer.",
+            "submit_url": "https://www.tk.de/en",
+            "submit_url_label": "Example: Techniker Krankenkasse (TK)",
+            "pdf": None,
             "issuer": "Public/private insurer",
             "form_url": None,
         },
@@ -209,7 +225,11 @@ _DE_MOVING = {
             "to_whom": "Deutsche Rentenversicherung",
             "retention": "Permanent",
             "reissuable": "Yes",
-            "submit_where": "Via employer / pension fund",
+            "submit_where": "Usually handled by your employer when you start; otherwise request it from the pension fund.",
+            "office": "Deutsche Rentenversicherung (German pension insurance).",
+            "submit_url": "https://www.deutsche-rentenversicherung.de",
+            "submit_url_label": "Deutsche Rentenversicherung",
+            "pdf": None,
             "issuer": "Deutsche Rentenversicherung",
             "form_url": None,
         },
@@ -220,7 +240,11 @@ _DE_MOVING = {
             "to_whom": "Bank",
             "retention": "Account lifetime",
             "reissuable": "n/a",
-            "submit_where": "Bank",
+            "submit_where": "Open an account at any German bank; requires your Meldebescheinigung + ID.",
+            "office": "Any German retail bank (or a mobile bank such as N26).",
+            "submit_url": None,
+            "submit_url_label": None,
+            "pdf": None,
             "issuer": "Bank",
             "form_url": None,
         },
@@ -550,12 +574,12 @@ _ES_MOVING = {
     ],
     "info": [
         ("Registration timing", "Within 3 months of entry", "Administración General del Estado"),
-        ("Fine", "None specified for EU citizens (registration is a right)", "docs/10"),
+        ("Fine", "None specified for EU citizens (registration is a right)", "docs/04-research/SPAIN-VALIDATION.md"),
         ("Fee", "Tasa modelo 790 código 012", "Policía Nacional"),
-        ("Landlord form", "None — address via registration + padrón", "docs/10"),
+        ("Landlord form", "None — address via registration + padrón", "docs/04-research/SPAIN-VALIDATION.md"),
         ("Tax ID", "NIE assigned with registration; doubles as NIF", "AEAT"),
-        ("Residence permit", "Not needed — the CUE is the registration", "docs/10"),
-        ("Second layer", "Padrón at the Ayuntamiento is a distinct step", "docs/10"),
+        ("Residence permit", "Not needed — the CUE is the registration", "docs/04-research/SPAIN-VALIDATION.md"),
+        ("Second layer", "Padrón at the Ayuntamiento is a distinct step", "docs/04-research/SPAIN-VALIDATION.md"),
     ],
     "sources": [
         "Administración General del Estado — https://administracion.gob.es/pag_Home/en/Tu-espacio-europeo/derechos-obligaciones/ciudadanos/residencia/obtencion-residencia/inscribirte-residente.html",
@@ -656,12 +680,12 @@ _MATRIX = {
 
 
 def _matrix_moving(code):
-    """Build a moving-case dashboard from the docs/11 matrix row (unverified)."""
+    """Build a moving-case dashboard from the docs/04-research/COUNTRY-MATRIX.md row (unverified)."""
     m = _MATRIX[code]
     return {
         "verified": False,
         "summary": (
-            f"**Rough / unverified data** from the 8-country registration matrix (docs/11). "
+            f"**Rough / unverified data** from the 8-country registration matrix (docs/04-research/COUNTRY-MATRIX.md). "
             f"EU citizens need **no residence permit** (freedom of movement) — a registration "
             f"certificate only. Registration authority: **{m['authority']}**. "
             f"Timing: {m['timing']}."
@@ -703,7 +727,7 @@ def _matrix_moving(code):
             ("Health / social", m["health"], m["source"]),
             ("Residence permit", m["permit"], m["source"]),
         ],
-        "sources": [f"Primary — {m['source']}", "Cross-check: docs/11-REGISTRATION-MATRIX-8-COUNTRIES.md"],
+        "sources": [f"Primary — {m['source']}", "Cross-check: docs/04-research/COUNTRY-MATRIX.md"],
     }
 
 

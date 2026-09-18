@@ -74,4 +74,4 @@ movement applies, no visa). Destination = **Germany** (Berlin).
 | Bank account | No | Yes |
 | Residence permit | No | No (freedom of movement) |
 
-Next: `02-TRAVELING-CASE.md` (A) and `03-MOVING-CASE.md` (B).
+Next: `TRAVELING-CASE.md` (A) and `MOVING-CASE.md` (B).

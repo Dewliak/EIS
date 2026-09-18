@@ -133,7 +133,7 @@ class EUDIWalletLogin:
                   <div class="eudi-card-label">Secure identity check</div>
                   <div class="eudi-card-title">Connect your EU wallet</div>
                   <div class="eudi-card-copy">Scan this QR code and approve the request to continue.</div>
-                  <img class="eudi-qr" src="data:image/png;base64,{transaction['qr_code_base64']}" alt="QR code for the EUDI wallet login request">
+                  <img class="eudi-qr" src="data:image/svg+xml;base64,{transaction["qr_code_base64"]}" alt="QR code for the EUDI wallet login request">
                   <a class="eudi-link" href="{transaction['sandbox_link']}" target="_blank" rel="noopener">Open the demo wallet&nbsp; ↗</a>
                   <div class="eudi-note">Same-device testing available</div>
                 </div>''',

@@ -1,34 +1,45 @@
-# EU Data Compass web app (Streamlit)
+# EU Data Compass web app (Streamlit prototype)
 
 Portugal-hosted instance of the EU Data Compass mobility platform. Origin is fixed to
 Portugal; the user picks a destination, an intent (traveling / moving), and a
-subject, then lands in the **Deadlines · Documents · Information** dashboard
-(the flow specified in `../docs/00-PLATFORM-CONCEPT.md` and `../docs/09-FULL-PLATFORM-SPEC.md`).
+subject, then lands in the **Deadlines · Documents · Information** dashboard.
+
+Access to the whole app is **gated by the EUDI Wallet verifier** — the Streamlit
+client shows a QR sign-in request and only the configured nationalities are let
+in before any content renders.
+
+> **Prototype, not the target.** The build target is the multi-page EU-portal
+> app in [`../docs/01-plan/IMPLEMENTATION-PLAN.md`](../docs/01-plan/IMPLEMENTATION-PLAN.md)
+> (spec: `../docs/02-spec/PLATFORM-SPEC.md`). This prototype covers the single
+> dashboard + the Residence subject only.
 
 ## What's real vs mock
 
-| Destination | Content |
-|---|---|
-| 🇩🇪 Germany | **Verified** — the primary worked case (Portugal → Germany), from `docs/02–04`. |
-| 🇪🇸 Spain | **Verified** — second case, from `docs/10`. |
-| SK, HU, SI, HR, RO, BG, GR, CY | **Rough / unverified** draft data from the `docs/11` registration matrix — badged in the UI. |
+| Destination | Content | Source |
+|---|---|---|
+| 🇩🇪 Germany | **Verified** — primary worked case (PT → DE) | `docs/04-research/MOVING-CASE.md`, `DOCUMENTS-INDEX.md` |
+| 🇪🇸 Spain | **Verified** — second case | `docs/04-research/SPAIN-VALIDATION.md` |
+| SK, HU, SI, HR, RO, BG, GR, CY | **Rough / unverified** — badged in the UI | `docs/04-research/COUNTRY-MATRIX.md` |
 
 Short-stay (traveling, < 3 months) content is real for **every** destination —
-it's the universal EU freedom-of-movement baseline.
+the universal EU freedom-of-movement baseline (`docs/04-research/TRAVELING-CASE.md`).
 
 Germany now includes sourced guides for Residence & Registration, Work, Studies,
 Tax, Health, Social security, Vehicle and Family. Other country/subject
 combinations may still be unavailable. The **Inform with ID** button and per-document **Sign** button are
 wallet-gated stubs (disabled) — the EUDI Wallet layer lands ~2027 (`docs/09` §6.2).
 
-Access to the site itself is protected by the EUDI Wallet verifier in
-`../eudi_login/`. The Streamlit client shows its QR request before any EU Data Compass content
-is rendered and permits only the configured nationalities.
+## Pieces
 
-## Files
+| Piece | What | Port |
+|---|---|---|
+| `../eudi_login/service.py` | **FastAPI** verifier (OpenID4VP, mocked). Issues the QR, polls, checks nationality. | 5000 |
+| `../eudi_login/client.py` | Streamlit login widget the app calls to gate access. | — |
+| `app.py` | The mobility dashboard, gated by the client above. | 8501 |
+| `data.py` | Content dataset (no invented facts; sourced from `../docs`). | — |
+| `../login_app.py` | Standalone login demo (optional; the dashboard already gates itself). | — |
 
-- `app.py` — Streamlit UI (navigation + dashboard).
-- `data.py` — content dataset (no invented facts; sourced from `../docs`).
+## Run — see [`../readme.md`](../readme.md#launch) for the full launch guide
 
 ## Run locally with Docker and cloudflared
 
@@ -81,5 +92,5 @@ The service exposes `/health` for Railway health checks. Nginx routes `/login`,
 `/callback`, `/status/*`, and `/health` to FastAPI, and all other paths to
 Streamlit.
 
-This remains a prototype verifier: it does not yet perform production-grade
-signature, trust-chain, key-binding, nonce/audience, or revocation validation.
+> Prototype verifier: no production-grade signature, trust-chain, key-binding,
+> nonce/audience, or revocation validation.

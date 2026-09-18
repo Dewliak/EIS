@@ -42,11 +42,11 @@ vocational school. *(Art. 7(1)(c) Directive 2004/38/EC.)*
 | Document | Issuer | URL |
 |---|---|---|
 | Admission / enrolment proof | University | (DAAD course search) https://www.daad.de |
-| Wohnungsgeberbestätigung | landlord | `../assets/pdf/wohnungsgeberbestaetigung_berlin.pdf` |
+| Wohnungsgeberbestätigung | landlord | `../../assets/pdf/wohnungsgeberbestaetigung_berlin.pdf` |
 | Student health insurance | TK / AOK / Barmer | https://www.tk.de · https://www.aok.de |
 | Anmeldung → Meldebescheinigung | Bürgeramt | service.berlin.de |
 | Proof of resources | bank statements | — |
-| Aufenthaltsanzeige §5 (if asked) | Ausländerbehörde | `../assets/pdf/aufenthaltsanzeige_5_freizuegigkeitsgesetz.pdf` |
+| Aufenthaltsanzeige §5 (if asked) | Ausländerbehörde | `../../assets/pdf/aufenthaltsanzeige_5_freizuegigkeitsgesetz.pdf` |
 
 ## 5. Sources
 - EU Equal Treatment Office (DE) — Residence: https://www.eu-gleichbehandlungsstelle.de/eugs-en/eu-citizens/information-center/residence

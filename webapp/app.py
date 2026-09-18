@@ -5,7 +5,8 @@ Streamlit front-end for the unified mobility platform.
 This is the **Portugal-hosted instance**: origin is fixed to Portugal, the user
 picks a destination, an intent (traveling / moving), and a subject, then lands
 in the Deadlines · Documents · Information dashboard described in
-docs/00-PLATFORM-CONCEPT.md and docs/09-FULL-PLATFORM-SPEC.md.
+docs/02-spec/PLATFORM-CONCEPT.md and docs/02-spec/PLATFORM-SPEC.md
+(build target: docs/01-plan/IMPLEMENTATION-PLAN.md).
 
 Real, sourced content exists for Germany (the focus) and Spain. Other
 destinations show rough/unverified data where long-stay research is incomplete.
@@ -18,7 +19,7 @@ import os
 import re
 import secrets
 import sys
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from html import escape
 from pathlib import Path
 
@@ -102,7 +103,6 @@ def _init_state():
     st.session_state.setdefault("country", None)
     st.session_state.setdefault("intent", None)
     st.session_state.setdefault("subject", None)
-    st.session_state.setdefault("wallet_documents", set())
     st.session_state.setdefault("inform_stage", "draft")
     st.session_state.setdefault("inform_draft", None)
     st.session_state.setdefault("travel_notification", None)
@@ -168,7 +168,6 @@ def header(user):
         st.caption(f"Wallet verified · {', '.join(user.nationalities)}")
         if st.button("Sign out", use_container_width=True):
             _wallet_login().sign_out()
-            st.session_state.wallet_documents.clear()
             st.session_state.travel_notification = None
             st.session_state.inform_draft = None
             st.session_state.inform_stage = "draft"
@@ -468,25 +467,6 @@ def deadline_timeline(deadlines):
     st.markdown(f'<div class="deadline-timeline">{"".join(items)}</div>', unsafe_allow_html=True)
 
 
-def wallet_document_action(doc):
-    """Prototype wallet action; replace with a real issuer flow later."""
-    document_name = doc["name"]
-    if document_name in st.session_state.wallet_documents:
-        st.markdown('<div class="wallet-status">Available in this session’s wallet</div>', unsafe_allow_html=True)
-        st.caption("Demo credential only. A production version would be issued by the relevant authority.")
-        return
-
-    st.markdown('<div class="wallet-status pending">Not yet available in wallet</div>', unsafe_allow_html=True)
-    if st.button(
-        "Add to EU Wallet (demo)",
-        key=f"wallet_{document_name}",
-        use_container_width=True,
-        help="Simulates an authority issuing this document to the wallet.",
-    ):
-        st.session_state.wallet_documents.add(document_name)
-        st.rerun()
-
-
 def plan_at_a_glance(country, intent, content):
     """Show the most useful next step before the detailed dashboard tabs."""
     first_deadline = content.get("deadlines", [{}])[0]
@@ -528,6 +508,161 @@ def notification_data_info():
     st.caption("Location sharing is a separate, explicit emergency-only consent. It is never enabled by creating a travel notification.")
 
 
+def _safe_name(name):
+    keep = "".join(ch if ch.isalnum() else "_" for ch in name)
+    return keep.strip("_").lower()[:60] or "document"
+
+
+def _embed_pdf(rel_path):
+    """Preview a local PDF inline (dependency-free base64 embed) + download."""
+    p = PROJECT_ROOT / rel_path
+    if not p.exists():
+        st.caption("Form preview is not available for this document.")
+        return
+    raw = p.read_bytes()
+    b64 = base64.b64encode(raw).decode("ascii")
+    st.html(
+        f'<embed src="data:application/pdf;base64,{b64}" type="application/pdf" '
+        f'width="100%" height="520" '
+        f'style="border:1px solid #d9e3f1;border-radius:.5rem;">'
+    )
+    st.download_button(
+        "Download form (PDF)", raw, file_name=p.name, mime="application/pdf",
+        key=f"dlform::{rel_path}", width="stretch",
+    )
+
+
+def _mock_signed_pdf(title, disclosed):
+    """Build a minimal, valid one-page PDF as the mock 'signed' artifact."""
+    def esc(s):
+        return s.replace("\\", r"\\").replace("(", r"\(").replace(")", r"\)")
+
+    stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    lines = [
+        "EU DATA COMPASS - DEMONSTRATION SIGNED DOCUMENT",
+        "",
+        f"Document: {title}",
+        "Signed with: EU Digital Identity Wallet (SIMULATED)",
+        f"Signed at: {stamp}",
+        "",
+        "Attributes disclosed from the wallet:",
+    ] + [f"  - {d}" for d in disclosed] + [
+        "",
+        "This is a MOCK signature for demonstration purposes only.",
+        "No real cryptographic signing has taken place.",
+    ]
+    text = "BT /F1 12 Tf 60 780 Td 16 TL\n" + "".join(
+        f"({esc(l)}) Tj T*\n" for l in lines
+    ) + "ET"
+    stream = text.encode("latin-1", "replace")
+
+    objs = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] "
+        b"/Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+        b"<< /Length %d >>\nstream\n" % len(stream) + stream + b"\nendstream",
+    ]
+    out = b"%PDF-1.4\n"
+    offsets = []
+    for i, obj in enumerate(objs, start=1):
+        offsets.append(len(out))
+        out += b"%d 0 obj\n" % i + obj + b"\nendobj\n"
+    xref_pos = len(out)
+    out += b"xref\n0 %d\n" % (len(objs) + 1)
+    out += b"0000000000 65535 f \n"
+    for off in offsets:
+        out += b"%010d 00000 n \n" % off
+    out += b"trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF" % (
+        len(objs) + 1, xref_pos)
+    return out
+
+
+@st.dialog("Sign with your EU Digital Identity Wallet")
+def wallet_sign_dialog(doc):
+    import time
+
+    st.caption("Demo — this simulates the EUDI Wallet signing flow (production wallets ~2027). "
+               "No real signature is created.")
+    disclosed = [x.strip() for x in str(doc.get("shared", "")).split(",") if x.strip()] or ["Identity"]
+    key = f"signed::{doc['name']}"
+
+    if not st.session_state.get(key):
+        st.markdown(f"**Document** — {doc['name']}")
+        st.markdown(f"**Sent to** — {doc.get('to_whom', '—')}")
+        st.markdown("**You will disclose from your wallet:**")
+        for d in disclosed:
+            st.markdown(f":blue-badge[{d}]")
+        c1, c2 = st.columns(2)
+        if c1.button("Approve & sign", type="primary", width="stretch"):
+            with st.status("Contacting your wallet…", expanded=True) as status:
+                st.write("Requesting your consent…")
+                time.sleep(0.5)
+                st.write("Wallet approved · verifying attributes…")
+                time.sleep(0.5)
+                st.write("Applying signature & generating the PDF…")
+                time.sleep(0.5)
+                status.update(label="Signed successfully", state="complete")
+            st.session_state[key] = True
+            st.rerun()
+        if c2.button("Cancel", width="stretch"):
+            st.session_state.pop("wallet_dialog_doc", None)
+            st.rerun()
+    else:
+        st.success("Signed with your EU Digital Identity Wallet (demo).")
+        pdf = _mock_signed_pdf(doc["name"], disclosed)
+        st.download_button(
+            "Download signed PDF", pdf,
+            file_name=f"{_safe_name(doc['name'])}_signed.pdf",
+            mime="application/pdf", type="primary", width="stretch",
+        )
+        if st.button("Done", width="stretch"):
+            st.session_state.pop("wallet_dialog_doc", None)
+            st.rerun()
+
+
+def document_card(doc):
+    """One expandable, clickable document widget."""
+    with st.expander(doc["name"], icon=":material/description:"):
+        st.write(doc["initial_info"])
+
+        left, right = st.columns(2)
+        with left:
+            st.markdown(f":material/badge: **Issuer** — {doc.get('issuer', '—')}")
+            st.markdown(f":material/share: **Data shared** — {doc.get('shared', '—')}")
+            st.markdown(f":material/how_to_reg: **To whom** — {doc.get('to_whom', '—')}")
+        with right:
+            st.markdown(f":material/schedule: **Kept for** — {doc.get('retention', '—')}")
+            st.markdown(f":material/autorenew: **Reissuable** — {doc.get('reissuable', '—')}")
+
+        with st.container(border=True):
+            st.markdown(":material/place: **Where & how to submit**")
+            st.write(doc.get("submit_where", "—"))
+            if doc.get("office"):
+                st.caption(doc["office"])
+            if doc.get("submit_url"):
+                st.link_button(
+                    doc.get("submit_url_label") or "Open official page",
+                    doc["submit_url"], icon=":material/open_in_new:",
+                )
+
+        has_pdf = bool(doc.get("pdf"))
+        if has_pdf and st.toggle("Preview the form", key=f"prev::{doc['name']}"):
+            _embed_pdf(doc["pdf"])
+
+        actions = st.columns(2)
+        with actions[0]:
+            if doc.get("form_url"):
+                st.link_button("Open form / source", doc["form_url"],
+                               icon=":material/link:", width="stretch")
+        with actions[1]:
+            if st.button("Sign with wallet", key=f"signbtn::{doc['name']}",
+                         icon=":material/draw:", width="stretch"):
+                st.session_state["wallet_dialog_doc"] = doc["name"]
+                st.rerun()
+
+
 def dashboard():
     c = data.get_country(st.session_state.country)
     intent = st.session_state.intent
@@ -548,6 +683,13 @@ def dashboard():
     st.info(content["summary"])
     inform_with_id()
 
+    # Re-open the wallet signing dialog across reruns while it is active.
+    open_doc_name = st.session_state.get("wallet_dialog_doc")
+    if open_doc_name:
+        open_doc = next((d for d in content["documents"] if d["name"] == open_doc_name), None)
+        if open_doc:
+            wallet_sign_dialog(open_doc)
+
     tab_dl, tab_docs, tab_info, tab_privacy = st.tabs(["Deadlines", "Documents", "Information", "Data & privacy"])
 
     with tab_dl:
@@ -557,39 +699,16 @@ def dashboard():
 
     with tab_docs:
         st.markdown("#### Documents & forms")
+        st.caption("Open a card for details, official links, a form preview, and the signing flow.")
         for doc in content["documents"]:
-            optional = "optional" in doc["name"].lower()
-            badge = "OPTIONAL" if optional else "REQUIRED"
-            with st.expander(f"{badge} · {doc['name']}"):
-                st.write(doc["initial_info"])
-                meta = {
-                    "Information shared": doc["shared"],
-                    "To whom": doc["to_whom"],
-                    "How long kept": doc["retention"],
-                    "Reissuable?": doc["reissuable"],
-                    "Where submitted": doc["submit_where"],
-                    "Issuer": doc["issuer"],
-                }
-                for k, v in meta.items():
-                    st.markdown(f"- **{k}:** {v}")
-                wallet_document_action(doc)
-                bcols = st.columns(2)
-                with bcols[0]:
-                    if doc["form_url"]:
-                        st.markdown(f"[Open form / source]({doc['form_url']})")
-                    else:
-                        st.caption("Source link is listed in the Information tab.")
-                with bcols[1]:
-                    st.button("Sign with wallet", key=f"sign_{doc['name']}", disabled=True,
-                              help="Document signing arrives with the EUDI Wallet integration (~2027).",
-                              use_container_width=True)
+            document_card(doc)
 
     with tab_info:
-        st.markdown("#### Rules, thresholds & contacts")
-        st.dataframe(
-            [{"Rule": r[0], "Value": r[1], "Source": r[2]} for r in content["info"]],
-            use_container_width=True, hide_index=True,
-        )
+        st.markdown("#### Rules & thresholds")
+        for rule, value, source in content["info"]:
+            with st.container(border=True):
+                st.markdown(f"**{rule}** — {value}")
+                st.caption(f"Source: {source}")
         st.markdown("#### Sources")
         for s in content["sources"]:
             st.markdown(f"- {s}")

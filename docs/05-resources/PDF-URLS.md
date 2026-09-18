@@ -1,13 +1,13 @@
 # 06 — PDF URLs & Forms
 
-Direct links to PDF documents/forms. Fetched assets under `assets/pdf/`.
+Direct links to PDF documents/forms. Fetched assets under `../assets/pdf/`.
 
 ## Fetched (saved locally)
 
 | File | Source | Status |
 |---|---|---|
-| `assets/pdf/wohnungsgeberbestaetigung_berlin.pdf` | Berlin landlord-confirmation form (§19(3) BMG), 1p DE | ✅ downloaded & text-extracted |
-| `assets/pdf/crue_form_porto.pdf` | Portugal CRUE form + guide (2pp PT) — *reverse direction, kept as reference* | ✅ downloaded & text-extracted |
+| `../assets/pdf/wohnungsgeberbestaetigung_berlin.pdf` | Berlin landlord-confirmation form (§19(3) BMG), 1p DE | ✅ downloaded & text-extracted |
+| `../assets/pdf/crue_form_porto.pdf` | Portugal CRUE form + guide (2pp PT) — *reverse direction, kept as reference* | ✅ downloaded & text-extracted |
 
 - **Germany (current case):** https://www.berlinstadtservice.de/pdf/Wohnungsgeberbescheinigung.pdf
 - **Portugal (reference):** https://portaldomunicipe.cm-porto.pt/documents/20122/1130484/fol_sef_PT.pdf/b3dfd875-90f6-9857-b62c-69b250b09aaa?t=1701336803152

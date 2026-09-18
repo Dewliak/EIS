@@ -27,7 +27,7 @@ Persona: **Beatriz** — Portugal (Porto) → Germany (Berlin), permanent job re
 ### Step 1 — Housing + landlord confirmation
 - [ ] Sign **rental contract**.
 - [ ] Get **Wohnungsgeberbestätigung** signed by the landlord/agent
-      (form `assets/pdf/wohnungsgeberbestaetigung_berlin.pdf`). The lease alone is insufficient.
+      (form `../assets/pdf/wohnungsgeberbestaetigung_berlin.pdf`). The lease alone is insufficient.
 
 ### Step 2 — Anmeldung (address registration) — within 14 days of moving in
 - [ ] Book an appointment at the local **Bürgeramt** (registration office).
@@ -95,5 +95,5 @@ Persona: **Beatriz** — Portugal (Porto) → Germany (Berlin), permanent job re
 ## Sources
 - EU Equal Treatment Office (Germany) — Residence — https://www.eu-gleichbehandlungsstelle.de/eugs-en/eu-citizens/information-center/residence
 - Make it in Germany — Information for EU citizens — https://www.make-it-in-germany.com/en/working-in-germany/information-eu-citizens
-- Wohnungsgeberbestätigung form (Berlin) — `assets/pdf/wohnungsgeberbestaetigung_berlin.pdf`
-- See `05-SOURCES.md` for full list.
+- Wohnungsgeberbestätigung form (Berlin) — `../assets/pdf/wohnungsgeberbestaetigung_berlin.pdf`
+- See `../05-resources/SOURCES.md` for full list.
